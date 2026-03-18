@@ -431,6 +431,7 @@ tbody td:last-child { border-right: none; }
           <div class="page-sub">Annual Procurement Plan — All Departments &nbsp;<span id="items-count" style="font-size:12px;background:var(--paper2);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-family:var(--font-mono)"></span></div>
         </div>
         <div class="header-actions">
+          <button class="btn btn-outline btn-sm" onclick="printAll()">🖨 Print All</button>
           <button class="btn btn-green btn-sm" onclick="openAddModal()">＋ Add Item</button>
         </div>
       </div>
@@ -950,7 +951,7 @@ const firebaseConfig = {
   .sec-head td{background:#e8edf5;font-weight:900;font-size:7.5px;text-transform:uppercase;letter-spacing:.4px;padding:3px 4px;}
   .subtotal-row td{background:#f5f5f5;font-weight:700;border-top:2px solid #333;}
   .grand-total td{background:#1a3358;color:#fff;font-weight:900;font-size:8px;}
-  .sig-block{display:flex;justify-content:space-between;margin-top:16px;gap:20px;}
+  .sig-block{display:flex;justify-content:space-between;margin-top:40px;gap:20px;}
   .sig{flex:1;text-align:center;border-top:1px solid #333;padding-top:4px;}
   .sig-name{font-weight:900;font-size:8px;text-transform:uppercase;}
   .sig-title{font-size:7px;color:#444;margin-top:1px;}
@@ -1044,6 +1045,203 @@ const firebaseConfig = {
       win.document.close();
     }
     window.printDept = printDept;
+
+    // ══ PRINT ALL DEPARTMENTS ══
+    function printAll(){
+      if(!S.items.length){ toast('No items to print','error'); return; }
+
+      const DEPTS_ORDER = ['GSO','ICT','MPDC','PESO','MHO','HRMO'];
+      const MONTHS_ALL  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const Q1=['January','February','March'], Q2=['April','May','June'];
+      const Q3=['July','August','September'],  Q4=['October','November','December'];
+      const datePrinted = new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+      const grandTotal  = S.items.reduce((s,i)=>s+parseFloat(i.total_amount||0),0);
+
+      function monthQty(item, month){
+        return (item.month||'').toLowerCase()===month.toLowerCase() ? (parseFloat(item.quantity)||0) : '';
+      }
+      function qSum(item,months){ return months.reduce((s,m)=>{ const v=monthQty(item,m); return s+(v===''?0:v); },0); }
+      function qAmt(item,months){ const q=qSum(item,months); return q>0?(q*parseFloat(item.unit_price||0)):0; }
+      function fmt(n){ return n>0?n:''; }
+      function fmtAmt(n){ return n>0?n.toLocaleString('en-PH',{minimumFractionDigits:2}):''; }
+
+      function itemRow(item, idx){
+        const up=parseFloat(item.unit_price||0);
+        const totalQty=parseFloat(item.quantity)||0;
+        const totalAmount=parseFloat(item.total_amount||0);
+        const q1=qSum(item,Q1),q1a=qAmt(item,Q1);
+        const q2=qSum(item,Q2),q2a=qAmt(item,Q2);
+        const q3=qSum(item,Q3),q3a=qAmt(item,Q3);
+        const q4=qSum(item,Q4),q4a=qAmt(item,Q4);
+        return `<tr>
+          <td class="tc">${idx}</td>
+          <td class="tl">${item.item||''}</td>
+          <td class="tc">${item.unit_of_measure||''}</td>
+          ${MONTHS_ALL.map(m=>`<td class="tc">${monthQty(item,m)||''}</td>`).join('')}
+          <td class="tc bold">${fmt(q1)}</td><td class="tr">${fmtAmt(q1a)}</td>
+          <td class="tc bold">${fmt(q2)}</td><td class="tr">${fmtAmt(q2a)}</td>
+          <td class="tc bold">${fmt(q3)}</td><td class="tr">${fmtAmt(q3a)}</td>
+          <td class="tc bold">${fmt(q4)}</td><td class="tr">${fmtAmt(q4a)}</td>
+          <td class="tc bold">${totalQty}</td>
+          <td class="tr">${up.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+          <td class="tr bold">${totalAmount.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+        </tr>`;
+      }
+
+      function sectionRows(list, label){
+        if(!list.length) return '';
+        const subTotal = list.reduce((s,i)=>s+parseFloat(i.total_amount||0),0);
+        return `
+          <tr class="sec-head"><td colspan="23" class="tl">${label}</td></tr>
+          ${list.map((item,i)=>itemRow(item,i+1)).join('')}
+          <tr class="subtotal-row">
+            <td colspan="21" class="tr">Sub-Total (${label})</td>
+            <td></td>
+            <td class="tr bold">₱${subTotal.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+          </tr>`;
+      }
+
+      // Build one table per department
+      let deptSections = '';
+      DEPTS_ORDER.forEach(dept => {
+        const deptItems = S.items.filter(i=>i.department===dept);
+        if(!deptItems.length) return;
+        const available    = deptItems.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
+        const notAvailable = deptItems.filter(i=> (i.availability||'').toLowerCase().includes('not'));
+        const deptTotal    = deptItems.reduce((s,i)=>s+parseFloat(i.total_amount||0),0);
+
+        deptSections += `
+          <div class="dept-block">
+            <div class="dept-header">
+              <div class="dept-title">${dept} Department</div>
+              <div class="dept-meta">
+                <span><b>Total:</b> ₱${deptTotal.toLocaleString('en-PH',{minimumFractionDigits:2})}</span>
+                <span><b>Items:</b> ${deptItems.length}</span>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th rowspan="2" style="width:18px">#</th>
+                  <th rowspan="2" style="min-width:110px">Item &amp; Specifications</th>
+                  <th rowspan="2" style="width:28px">Unit</th>
+                  <th colspan="3">Q1 Qty</th><th colspan="3">Q2 Qty</th>
+                  <th colspan="3">Q3 Qty</th><th colspan="3">Q4 Qty</th>
+                  <th rowspan="2" style="width:18px">Q1</th><th rowspan="2" style="width:44px">Q1 Amt</th>
+                  <th rowspan="2" style="width:18px">Q2</th><th rowspan="2" style="width:44px">Q2 Amt</th>
+                  <th rowspan="2" style="width:18px">Q3</th><th rowspan="2" style="width:44px">Q3 Amt</th>
+                  <th rowspan="2" style="width:18px">Q4</th><th rowspan="2" style="width:44px">Q4 Amt</th>
+                  <th rowspan="2" style="width:26px">Total Qty</th>
+                  <th rowspan="2" style="width:44px">Unit Price</th>
+                  <th rowspan="2" style="width:52px">Total Amount</th>
+                </tr>
+                <tr>
+                  <th class="sub">Jan</th><th class="sub">Feb</th><th class="sub">Mar</th>
+                  <th class="sub">Apr</th><th class="sub">May</th><th class="sub">Jun</th>
+                  <th class="sub">Jul</th><th class="sub">Aug</th><th class="sub">Sep</th>
+                  <th class="sub">Oct</th><th class="sub">Nov</th><th class="sub">Dec</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${sectionRows(available,'AVAILABLE')}
+                ${sectionRows(notAvailable,'NOT AVAILABLE')}
+                <tr class="grand-total">
+                  <td colspan="21" class="tr">DEPARTMENT TOTAL — ${dept}</td>
+                  <td></td>
+                  <td class="tr">₱${deptTotal.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>`;
+      });
+
+      const html = `<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<title>APP-CSE 2025 — All Departments</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Arial,sans-serif;font-size:7.5px;color:#000;background:#fff;}
+  .cover{text-align:center;padding:20mm 15mm 10mm;page-break-after:always;}
+  .cover-title{font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+  .cover-sub{font-size:13px;font-weight:700;margin-bottom:20px;}
+  .cover-meta{font-size:11px;line-height:2;margin-bottom:30px;}
+  .cover-total{font-size:16px;font-weight:900;color:#1a3358;margin-top:10px;}
+  .cover-depts{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:16px;}
+  .cover-dept-pill{background:#1a3358;color:#fff;padding:4px 14px;border-radius:20px;font-size:10px;font-weight:700;}
+  .dept-block{margin-bottom:10mm;page-break-inside:avoid;}
+  .dept-header{display:flex;justify-content:space-between;align-items:center;background:#1a3358;color:#fff;padding:5px 10px;margin-bottom:2px;border-radius:3px 3px 0 0;}
+  .dept-title{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;}
+  .dept-meta{font-size:8px;display:flex;gap:14px;}
+  table{width:100%;border-collapse:collapse;}
+  th,td{border:1px solid #333;padding:2px 3px;vertical-align:middle;}
+  th{background:#1a3358;color:#fff;font-weight:700;text-align:center;font-size:6px;letter-spacing:.2px;}
+  th.sub{background:#2d4f7c;}
+  .tl{text-align:left;}.tc{text-align:center;}.tr{text-align:right;}.bold{font-weight:700;}
+  .sec-head td{background:#e8edf5;font-weight:900;font-size:7px;text-transform:uppercase;padding:3px 4px;}
+  .subtotal-row td{background:#f0f4f8;font-weight:700;border-top:1.5px solid #333;}
+  .grand-total td{background:#1a3358;color:#fff;font-weight:900;font-size:7.5px;}
+  .sig-block{display:flex;justify-content:space-between;margin-top:40px;gap:20px;page-break-inside:avoid;}
+  .sig{flex:1;text-align:center;border-top:1px solid #333;padding-top:4px;}
+  .sig-name{font-weight:900;font-size:8px;text-transform:uppercase;}
+  .sig-title{font-size:7px;color:#444;margin-top:1px;}
+  .sig-office{font-size:7px;color:#666;}
+  .page-header-mini{text-align:center;margin-bottom:4px;font-size:8px;color:#666;border-bottom:1px solid #ddd;padding-bottom:3px;}
+  @media print{
+    body{margin:0;}
+    .dept-block{page-break-before:auto;}
+    @page{size:legal landscape;margin:8mm;}
+  }
+</style>
+</head><body>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <div class="cover-title">Annual Procurement Plan for 2025</div>
+  <div class="cover-sub">For Common-Use Supplies and Equipment (APP-CSE)</div>
+  <div class="cover-meta">
+    <div><b>Province/City/Municipality:</b> Balayan, Batangas</div>
+    <div><b>Date Printed:</b> ${datePrinted}</div>
+    <div><b>Total Items:</b> ${S.items.length}</div>
+  </div>
+  <div class="cover-total">GRAND TOTAL: ₱${grandTotal.toLocaleString('en-PH',{minimumFractionDigits:2})}</div>
+  <div class="cover-depts">
+    ${DEPTS_ORDER.filter(d=>S.items.some(i=>i.department===d)).map(d=>{
+      const dt=S.items.filter(i=>i.department===d).reduce((s,i)=>s+parseFloat(i.total_amount||0),0);
+      return `<div class="cover-dept-pill">${d} — ₱${dt.toLocaleString('en-PH',{minimumFractionDigits:2})}</div>`;
+    }).join('')}
+  </div>
+</div>
+
+<!-- DEPARTMENT TABLES -->
+${deptSections}
+
+<!-- SIGNATURE BLOCK -->
+<div class="sig-block">
+  <div class="sig">
+    <div class="sig-name">MARICORA M. MANINGAT</div>
+    <div class="sig-title">Acting Department Head</div>
+    <div class="sig-office">General Services Office</div>
+  </div>
+  <div class="sig">
+    <div class="sig-name">NORMANDO BAGAY</div>
+    <div class="sig-title">Acting Department Head</div>
+    <div class="sig-office">Budget Office</div>
+  </div>
+  <div class="sig">
+    <div class="sig-name">ELISA E. ABAD</div>
+    <div class="sig-title">Head, of Procuring Entity</div>
+    <div class="sig-office">&nbsp;</div>
+  </div>
+</div>
+
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`;
+
+      const win = window.open('','_blank','width=1200,height=800');
+      win.document.write(html);
+      win.document.close();
+    }
+    window.printAll = printAll;
 
     loadDashboard();
   } catch(e) {
