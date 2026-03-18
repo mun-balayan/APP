@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; connect-src 'self' https:; img-src 'self' data: https:; font-src 'self' https:;">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Annual Procurement Plan">
 <meta name="theme-color" content="#071D3F">
@@ -1199,19 +1199,6 @@ const firebaseConfig = {
     document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#f7f5ef;font-family:sans-serif;text-align:center;padding:20px"><div><div style="font-size:48px;margin-bottom:16px">&#9888;&#65039;</div><div style="font-size:18px;margin-bottom:8px;color:#0d1f3c">Firebase Connection Failed</div><div style="font-size:13px;color:#888">'+e.message+'</div></div></div>';
   }
 })();
-</script>
-<script>
-function openModal(id){document.getElementById(id).classList.add('open');}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-function closeOverlay(e,id){if(e.target.id===id)closeModal(id);}
-window.openModal=openModal;window.closeModal=closeModal;window.closeOverlay=closeOverlay;
-function dr(label,val){if(!val||String(val).trim()==='')return '';return `<div class="detail-row"><span class="detail-label">${label}</span><span class="detail-value">${val}</span></div>`;}
-function ea(s){return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-let toastTimer;
-function toast(msg,type='success'){const el=document.getElementById('toast');el.textContent=msg;el.className=`toast show ${type}`;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3000);}
-</script>
-</body>
-</html>
 </script>
 <script>
 function openModal(id){document.getElementById(id).classList.add('open');}
