@@ -175,17 +175,35 @@ function handleFile(file){
 }
 
 function showPreview(){
-  const byDept={}, byType={}, byAvail={};
+  const byDept={}, byType={}, byAvail={}, sheetStatus={};
+  // Track which sheets were checked
+  Object.entries(SHEET_MAP).forEach(([sheet,meta])=>{ sheetStatus[sheet]=0; });
   parsedRows.forEach(r=>{
     byDept[r.department]=(byDept[r.department]||0)+1;
     byType[r.type]=(byType[r.type]||0)+1;
     byAvail[r.availability]=(byAvail[r.availability]||0)+1;
+    if(r._sheet) sheetStatus[r._sheet]=(sheetStatus[r._sheet]||0)+1;
   });
+
+  // Dept breakdown
+  const ALL_DEPTS=['GSO','ICT','MPDC','PESO','MHO','HRMO'];
+  const deptBreakdown=ALL_DEPTS.map(d=>{
+    const count=byDept[d]||0;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #21262d;font-size:12px;">
+      <span style="color:${count?'#e6edf3':'#484f58'}">${d}</span>
+      <span class="badge ${count?'badge-green':'badge-gray'}">${count} record${count!==1?'s':''}</span>
+    </div>`;
+  }).join('');
 
   document.getElementById('summary').innerHTML=`
     <div class="sum-box"><div class="sum-num">${parsedRows.length}</div><div class="sum-label">Total Records</div></div>
-    <div class="sum-box"><div class="sum-num">${Object.keys(byDept).length}</div><div class="sum-label">Departments</div></div>
-    <div class="sum-box"><div class="sum-num">${Object.keys(byType).length}</div><div class="sum-label">Types</div></div>`;
+    <div class="sum-box"><div class="sum-num">${Object.keys(byDept).filter(d=>byDept[d]>0).length} / ${ALL_DEPTS.length}</div><div class="sum-label">Depts with Data</div></div>
+    <div class="sum-box"><div class="sum-num">${byAvail['Not Available']||0}</div><div class="sum-label">Not Available</div></div>
+    <div style="grid-column:1/-1;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px;">
+      <div style="font-size:11px;font-weight:700;color:#8b949e;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">📊 Per Department Breakdown</div>
+      ${deptBreakdown}
+      <div style="font-size:11px;color:#484f58;margin-top:8px;">Departments with 0 records have no data in the Excel file yet — they can still be added manually in the app.</div>
+    </div>`;
 
   const thead=`<thead><tr><th>#</th><th>Item</th><th>Dept</th><th>Type</th><th>Month</th><th>Unit Price</th><th>Qty</th><th>Total</th><th>Status</th></tr></thead>`;
   const tbody=parsedRows.slice(0,50).map((r,i)=>`<tr>

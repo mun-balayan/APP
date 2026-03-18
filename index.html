@@ -344,10 +344,10 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const firebaseConfig = {
-  apiKey:     "AIzaSyCRYKwAuwFcpn1yqN-y_SrFuKQmU2mJqCY",
-  authDomain: "annual-procurement-plan.firebaseapp.com",
-  projectId:  "annual-procurement-plan",
-  appId:      "1:456357233871:web:965647a1a73020fbb523ba",
+  apiKey:     "AIzaSyCmoO3iEpR1R4GzHK2Z21YfCVV9_VRoMJo",
+  authDomain: "vehicle-maintenance-syst-4fb2e.firebaseapp.com",
+  projectId:  "vehicle-maintenance-syst-4fb2e",
+  appId:      "1:513108103014:web:7ade19f5a6e6bb3e7f42a7",
 };
 
 (function initApp(){
@@ -541,7 +541,10 @@ const firebaseConfig = {
 
     function renderItemTable(list, tableId, cardsId){
       const el=document.getElementById(tableId);
-      if(!list.length){ el.innerHTML='<div class="empty"><div class="empty-icon">📦</div>No items found</div>'; document.getElementById(cardsId).innerHTML=''; return; }
+      if(!list.length){
+        el.innerHTML=`<div class="empty"><div class="empty-icon">📦</div><div style="margin-bottom:12px">No items yet for this department.</div><button class="btn btn-primary btn-sm" onclick="openAddModal()">＋ Add First Item</button></div>`;
+        document.getElementById(cardsId).innerHTML=''; return;
+      }
       el.innerHTML=`<div class="table-wrap"><table><thead><tr>
         <th>Item</th><th class="hide-mobile">Dept</th><th class="hide-mobile">Type</th>
         <th>Month</th><th class="hide-mobile">Unit</th><th>Unit Price</th>
