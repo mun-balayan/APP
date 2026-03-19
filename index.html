@@ -6,438 +6,798 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Annual Procurement Plan">
-<meta name="theme-color" content="#071D3F">
+<meta name="apple-mobile-web-app-title" content="APP-CSE 2025">
+<meta name="description" content="Annual Procurement Plan — Municipality of Balayan">
+<meta name="theme-color" content="#1B3A6B">
 <link rel="icon" type="image/png" href="./logo.png">
 <link rel="apple-touch-icon" href="./logo.png">
-<title>Annual Procurement Plan — Municipality of Balayan</title>
+<link rel="shortcut icon" href="./logo.png">
+<title>APP-CSE 2025 — Municipality of Balayan</title>
 <script>
   if('serviceWorker' in navigator){
-    window.addEventListener('load',()=>{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
-    navigator.serviceWorker.addEventListener('controllerchange',()=>{ window.location.reload(); });
+    window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{});});
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{window.location.reload();});
   }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+/* ═══════════════════════════════════════
+   DESIGN SYSTEM — "CIVIC BLUE"
+   Light, clean, government-grade.
+   High readability. SVG icons only.
+═══════════════════════════════════════ */
 :root {
-  --bg:        #EDECEA;
-  --bg2:       #E4E2DF;
-  --bg3:       #D9D6D1;
-  --navy:      #071D3F;
-  --navy2:     #0E2D5E;
-  --navy3:     #163D7A;
-  --navy-glow: rgba(7,29,63,.06);
-  --gold:      #C48A0A;
-  --gold2:     #9D6E08;
-  --gold-light: rgba(196,138,10,.1);
-  --gold-border: rgba(196,138,10,.3);
-  --green:     #006B3C;
-  --green2:    #00522E;
-  --green-light: rgba(0,107,60,.09);
-  --green-border: rgba(0,107,60,.2);
-  --red:       #B82A1E;
-  --red2:      #8F1F15;
-  --red-light: rgba(184,42,30,.08);
-  --red-border: rgba(184,42,30,.2);
-  --ink:       #18181B;
-  --ink2:      #3F3F46;
-  --ink3:      #71717A;
-  --ink4:      #A1A1AA;
-  --border:    #CFCBC4;
-  --border2:   #E0DDD7;
-  --white:     #FFFFFF;
-  --shadow-xs: 0 1px 2px rgba(7,29,63,.07);
-  --shadow-sm: 0 2px 8px rgba(7,29,63,.09);
-  --shadow:    0 4px 20px rgba(7,29,63,.12);
-  --shadow-lg: 0 8px 40px rgba(7,29,63,.18);
-  --shadow-xl: 0 16px 64px rgba(7,29,63,.22);
-  --radius:    8px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-ui:      'Outfit', system-ui, sans-serif;
-  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
-  --topbar-h: 68px;
-  --safe-bot: env(safe-area-inset-bottom, 0px);
-  --gold-gradient: linear-gradient(135deg, #D4A017, #C48A0A, #9D6E08);
-  --navy-gradient: linear-gradient(160deg, #0E2D5E 0%, #071D3F 100%);
+  --bg:    #F4F6FA;
+  --bg2:   #EAECF2;
+  --bg3:   #DDE1EB;
+  --white: #FFFFFF;
+
+  --blue:        #1B3A6B;
+  --blue2:       #254E8F;
+  --blue3:       #3163AF;
+  --blue-light:  rgba(27,58,107,.07);
+  --blue-border: rgba(27,58,107,.18);
+
+  --gold:        #B07C0A;
+  --gold2:       #8A6008;
+  --gold-light:  rgba(176,124,10,.1);
+  --gold-border: rgba(176,124,10,.28);
+  --gold-grad:   linear-gradient(135deg,#D4980E,#B07C0A);
+
+  --green:        #0A6B3C;
+  --green2:       #085430;
+  --green-light:  rgba(10,107,60,.09);
+  --green-border: rgba(10,107,60,.22);
+
+  --red:        #C0271A;
+  --red2:       #971E14;
+  --red-light:  rgba(192,39,26,.08);
+  --red-border: rgba(192,39,26,.2);
+
+  --ink:   #0F1929;
+  --ink2:  #374151;
+  --ink3:  #6B7280;
+  --ink4:  #9CA3AF;
+  --bdr:   #D1D8E8;
+  --bdr2:  #E4E8F2;
+
+  --sh1: 0 1px 3px rgba(27,58,107,.08);
+  --sh2: 0 4px 16px rgba(27,58,107,.1);
+  --sh3: 0 8px 32px rgba(27,58,107,.14);
+  --sh4: 0 16px 48px rgba(27,58,107,.18);
+
+  --r:  7px;
+  --r2: 12px;
+  --r3: 18px;
+
+  --fu: 'IBM Plex Sans', system-ui, sans-serif;
+  --fm: 'IBM Plex Mono', monospace;
+
+  --bar-h: 64px;
+  --safe-bot: env(safe-area-inset-bottom,0px);
 }
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html{font-size:15px;-webkit-text-size-adjust:100%;}
-body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);line-height:1.55;overflow:hidden;height:100vh;height:100dvh;}
-button{font-family:var(--font-ui);cursor:pointer;}
-input,textarea,select{font-family:var(--font-ui);}
+body{background:var(--bg);color:var(--ink);font-family:var(--fu);line-height:1.55;overflow:hidden;height:100vh;height:100dvh;}
+button,input,select,textarea{font-family:var(--fu);}
+button{cursor:pointer;}
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;}
+::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:5px;}
+::-webkit-scrollbar-thumb:hover{background:var(--ink4);}
 
-body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(circle,rgba(7,29,63,.035) 1px,transparent 1px);background-size:24px 24px;}
-body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(7,29,63,.04) 0%,transparent 40%);}
+/* subtle dot bg */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(circle,rgba(27,58,107,.04) 1px,transparent 1px);
+  background-size:22px 22px;
+}
 
+/* ═══ SHELL ═══ */
 #shell{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;}
 
-/* TOPBAR */
-#topbar{height:var(--topbar-h);background:var(--navy-gradient);display:flex;align-items:center;flex-shrink:0;position:relative;z-index:100;box-shadow:0 4px 24px rgba(7,29,63,.45);border-bottom:1px solid rgba(196,138,10,.2);}
-#topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(196,138,10,.6) 20%,rgba(212,160,23,.9) 50%,rgba(196,138,10,.6) 80%,transparent);pointer-events:none;}
-.topbar-brand{display:flex;align-items:center;gap:12px;padding:0 22px;border-right:1px solid rgba(255,255,255,.08);height:100%;flex-shrink:0;}
-.brand-seal-img{width:40px;height:40px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px rgba(196,138,10,.5),0 0 0 4px rgba(196,138,10,.15);flex-shrink:0;}
-.brand-text{line-height:1.2;}
-.brand-title{font-family:var(--font-display);font-size:16px;color:#fff;letter-spacing:.3px;white-space:nowrap;}
-.brand-sub{font-size:9.5px;color:rgba(255,255,255,.4);letter-spacing:1.2px;text-transform:uppercase;font-weight:500;}
+/* ═══════════════════════════════════════
+   TOP BAR
+═══════════════════════════════════════ */
+#topbar{
+  height:var(--bar-h);
+  background:var(--blue);
+  display:flex;align-items:center;
+  flex-shrink:0;position:relative;z-index:100;
+  box-shadow:0 2px 16px rgba(27,58,107,.35);
+}
+/* gold shimmer line at bottom */
+#topbar::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent 0%,rgba(212,152,14,.8) 30%,rgba(212,152,14,1) 50%,rgba(212,152,14,.8) 70%,transparent 100%);
+}
 
-/* TABS */
-#tab-nav{display:flex;align-items:center;gap:2px;flex:1;overflow-x:auto;height:100%;scrollbar-width:none;padding:0 10px;}
+/* Brand */
+.tb-brand{
+  display:flex;align-items:center;gap:11px;
+  padding:0 20px;border-right:1px solid rgba(255,255,255,.1);
+  height:100%;flex-shrink:0;
+}
+.tb-seal{
+  width:38px;height:38px;border-radius:50%;
+  object-fit:cover;flex-shrink:0;
+  box-shadow:0 0 0 2px rgba(212,152,14,.6),0 0 0 4px rgba(212,152,14,.18);
+}
+.tb-seal-fb{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  background:rgba(255,255,255,.15);
+  display:none;align-items:center;justify-content:center;
+}
+.tb-seal-fb svg{width:22px;height:22px;color:#fff;}
+.tb-name{font-size:15px;font-weight:700;color:#fff;white-space:nowrap;letter-spacing:-.1px;}
+.tb-sub{font-size:9px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+/* Tab navigation */
+#tab-nav{
+  display:flex;align-items:center;gap:2px;
+  flex:1;overflow-x:auto;height:100%;
+  scrollbar-width:none;padding:0 8px;
+}
 #tab-nav::-webkit-scrollbar{display:none;}
-.tab-btn{display:flex;align-items:center;gap:6px;padding:6px 14px;font-size:12.5px;font-weight:500;color:rgba(255,255,255,.5);background:transparent;border:none;border-radius:8px;white-space:nowrap;transition:color .15s,background .15s;cursor:pointer;position:relative;height:38px;}
-.tab-btn:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.07);}
-.tab-btn.active{color:#fff;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(196,138,10,.35);}
-.tab-btn.active::before{content:'';position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:24px;height:2px;background:var(--gold-gradient);border-radius:2px;}
-.tab-icon{font-size:14px;line-height:1;}
-.tab-badge{background:rgba(255,255,255,.1);border-radius:20px;padding:1px 7px;font-size:10px;font-family:var(--font-mono);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.08);}
-.tab-btn.active .tab-badge{background:rgba(196,138,10,.25);color:#F0C040;border-color:rgba(196,138,10,.3);}
-.tab-divider{width:1px;background:rgba(255,255,255,.06);margin:14px 4px;flex-shrink:0;}
-.topbar-right{display:flex;align-items:center;gap:10px;padding:0 18px;border-left:1px solid rgba(255,255,255,.08);flex-shrink:0;}
-.topbar-clock{font-family:var(--font-mono);font-size:11px;color:rgba(255,255,255,.35);letter-spacing:.5px;}
-.btn-add{background:var(--gold-gradient);color:#fff;border:none;border-radius:var(--radius);padding:8px 16px;font-size:12.5px;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s;white-space:nowrap;display:flex;align-items:center;gap:5px;box-shadow:0 2px 12px rgba(196,138,10,.4);text-shadow:0 1px 2px rgba(0,0,0,.2);}
-.btn-add:hover{opacity:.9;transform:translateY(-1px);}
-.btn-add:active{transform:translateY(0);}
-#mobile-menu-btn{display:none;background:none;border:none;color:rgba(255,255,255,.65);font-size:22px;padding:4px 14px;}
+.tab-btn{
+  display:flex;align-items:center;gap:7px;
+  padding:0 14px;font-size:12.5px;font-weight:500;
+  color:rgba(255,255,255,.55);background:transparent;
+  border:none;height:100%;white-space:nowrap;
+  transition:color .15s,background .15s;cursor:pointer;
+  position:relative;
+}
+.tab-btn svg{width:15px;height:15px;flex-shrink:0;}
+.tab-btn:hover{color:rgba(255,255,255,.9);background:rgba(255,255,255,.07);}
+.tab-btn.active{color:#fff;background:rgba(255,255,255,.1);}
+.tab-btn.active::after{
+  content:'';position:absolute;bottom:0;left:50%;
+  transform:translateX(-50%);width:32px;height:3px;
+  background:var(--gold-grad);border-radius:2px 2px 0 0;
+}
+.tab-badge{
+  background:rgba(255,255,255,.12);border-radius:20px;
+  padding:1px 8px;font-size:10px;font-family:var(--fm);
+  color:rgba(255,255,255,.55);
+}
+.tab-btn.active .tab-badge{background:rgba(212,152,14,.3);color:#FFD968;}
+.tb-divider{width:1px;background:rgba(255,255,255,.08);margin:16px 4px;flex-shrink:0;}
 
-/* OFFLINE */
-#offline-banner{display:none;background:linear-gradient(90deg,#8B5E08,#C48A0A);color:#fff;text-align:center;padding:7px 16px;font-size:12px;font-weight:600;letter-spacing:.3px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.15);}
-#offline-banner.show{display:block;}
+/* Right side */
+.tb-right{
+  display:flex;align-items:center;gap:9px;
+  padding:0 16px;border-left:1px solid rgba(255,255,255,.1);flex-shrink:0;
+}
+.tb-clock{font-family:var(--fm);font-size:11px;color:rgba(255,255,255,.38);letter-spacing:.3px;}
+.btn-add-top{
+  background:var(--gold-grad);color:#fff;border:none;
+  border-radius:var(--r);padding:8px 15px;font-size:12.5px;
+  font-weight:600;cursor:pointer;display:flex;align-items:center;
+  gap:6px;box-shadow:0 2px 10px rgba(176,124,10,.4);
+  transition:opacity .15s,transform .12s;
+}
+.btn-add-top svg{width:14px;height:14px;}
+.btn-add-top:hover{opacity:.9;transform:translateY(-1px);}
+.btn-add-top:active{transform:translateY(0);}
+#mobile-menu-btn{
+  display:none;background:none;border:none;
+  color:rgba(255,255,255,.7);padding:4px 14px;
+}
+#mobile-menu-btn svg{width:22px;height:22px;}
 
-/* CONTENT */
+/* ═══ OFFLINE BANNER ═══ */
+#offline-banner{
+  display:none;
+  background:linear-gradient(90deg,#7A4A06,#B07C0A);
+  color:#fff;text-align:center;padding:7px 16px;
+  font-size:12px;font-weight:600;letter-spacing:.2px;
+  flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.15);
+  align-items:center;justify-content:center;gap:8px;
+}
+#offline-banner.show{display:flex;}
+#offline-banner svg{width:15px;height:15px;flex-shrink:0;}
+
+/* ═══ CONTENT ═══ */
 #content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
-.page{display:none;padding:28px 32px;animation:pageIn .22s cubic-bezier(.4,0,.2,1);}
+.page{display:none;padding:26px 30px;animation:pgIn .2s ease;}
 .page.active{display:block;}
-@keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 
-.page-header{margin-bottom:26px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
-.page-heading{font-family:var(--font-display);font-size:31px;color:var(--navy);line-height:1.1;font-weight:700;}
-.page-heading span{font-style:italic;color:var(--gold);}
-.page-sub{font-size:12.5px;color:var(--ink3);margin-top:5px;font-weight:400;}
-.header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+/* ═══ MOBILE BOTTOM NAV ═══ */
+#bottom-nav{
+  display:none;background:var(--blue);
+  flex-shrink:0;padding-bottom:var(--safe-bot);
+  border-top:1px solid rgba(255,255,255,.1);
+  box-shadow:0 -3px 16px rgba(27,58,107,.25);
+}
+.bnav-inner{display:flex;}
+.bnav-btn{
+  flex:1;background:none;border:none;color:rgba(255,255,255,.45);
+  display:flex;flex-direction:column;align-items:center;
+  padding:9px 0 8px;font-size:9px;gap:3px;
+  transition:color .15s;font-family:var(--fu);font-weight:600;
+  text-transform:uppercase;letter-spacing:.3px;
+}
+.bnav-btn.active{color:#FFD968;}
+.bnav-btn svg{width:20px;height:20px;}
 
-/* STAT CARDS */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
-.stat-card{background:var(--white);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:22px 24px;box-shadow:var(--shadow-sm);transition:box-shadow .2s,transform .2s;animation:fadeUp .35s ease both;position:relative;overflow:hidden;}
-.stat-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:8px 0 0 8px;}
-.stat-card::after{content:'';position:absolute;top:0;right:0;bottom:0;left:0;background:radial-gradient(circle at top right,rgba(255,255,255,.6),transparent 60%);pointer-events:none;}
-.stat-card.navy::before{background:linear-gradient(180deg,var(--navy3),var(--navy));}
-.stat-card.green::before{background:linear-gradient(180deg,#00A85E,var(--green));}
-.stat-card.gold::before{background:var(--gold-gradient);}
-.stat-card.red::before{background:linear-gradient(180deg,#E8503A,var(--red));}
-.stat-card:hover{box-shadow:var(--shadow);transform:translateY(-2px);}
-.stat-icon{font-size:28px;position:absolute;right:18px;top:18px;opacity:.15;transition:opacity .2s;line-height:1;}
-.stat-card:hover .stat-icon{opacity:.25;}
-.stat-label{font-size:10px;font-weight:600;color:var(--ink3);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;}
-.stat-num{font-family:var(--font-display);font-size:36px;line-height:1;color:var(--navy);font-weight:700;}
-.stat-num.green{color:var(--green);}
-.stat-num.gold{color:var(--gold);}
-.stat-num.red{color:var(--red);}
-.stat-num.sm{font-size:22px;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+/* ═══════════════════════════════════════
+   PAGE HEADER
+═══════════════════════════════════════ */
+.page-header{
+  margin-bottom:24px;display:flex;
+  align-items:flex-start;justify-content:space-between;
+  gap:16px;flex-wrap:wrap;
+}
+.page-title{font-size:26px;font-weight:700;color:var(--blue);line-height:1.15;letter-spacing:-.3px;}
+.page-title em{font-style:normal;color:var(--gold);}
+.page-sub{font-size:12px;color:var(--ink3);margin-top:5px;font-weight:400;}
+.hdr-actions{display:flex;align-items:center;gap:9px;flex-shrink:0;}
 
-/* DASHBOARD */
-.dash-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:20px;}
+/* ═══════════════════════════════════════
+   STAT CARDS
+═══════════════════════════════════════ */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px;}
+.stat-card{
+  background:var(--white);border:1px solid var(--bdr2);
+  border-radius:var(--r2);padding:20px 22px;
+  box-shadow:var(--sh1);transition:box-shadow .2s,transform .2s;
+  animation:fadeUp .3s ease both;position:relative;overflow:hidden;
+}
+/* colored top bar */
+.stat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  border-radius:var(--r2) var(--r2) 0 0;
+}
+.stat-card.c-blue::before {background:linear-gradient(90deg,var(--blue),var(--blue3));}
+.stat-card.c-gold::before {background:var(--gold-grad);}
+.stat-card.c-green::before{background:linear-gradient(90deg,var(--green),#1AAB65);}
+.stat-card.c-red::before  {background:linear-gradient(90deg,var(--red),#E84030);}
+.stat-card:hover{box-shadow:var(--sh2);transform:translateY(-2px);}
+/* icon watermark */
+.stat-wm{
+  position:absolute;right:16px;top:16px;
+  width:32px;height:32px;opacity:.1;color:var(--blue);
+  transition:opacity .2s;
+}
+.stat-wm svg{width:32px;height:32px;}
+.stat-card:hover .stat-wm{opacity:.2;}
+.stat-label{font-size:10px;font-weight:600;color:var(--ink3);letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;}
+.stat-num{font-size:34px;font-weight:700;color:var(--blue);line-height:1;letter-spacing:-.5px;font-family:var(--fu);}
+.stat-num.c-gold {color:var(--gold);}
+.stat-num.c-green{color:var(--green);}
+.stat-num.c-red  {color:var(--red);}
+.stat-num.sm{font-size:20px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══════════════════════════════════════
+   DASHBOARD CARDS
+═══════════════════════════════════════ */
+.dash-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;}
 .dash-full{grid-column:1/-1;}
-.dash-card{background:var(--white);border:1px solid var(--border2);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;}
-.dash-card-head{padding:15px 20px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,rgba(7,29,63,.02),transparent);}
-.dash-card-title{font-family:var(--font-display);font-size:15px;color:var(--navy);display:flex;align-items:center;gap:8px;font-weight:700;}
-.dash-card-body{padding:18px 20px;}
-.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:11px;}
+.d-card{
+  background:var(--white);border:1px solid var(--bdr2);
+  border-radius:var(--r2);box-shadow:var(--sh1);overflow:hidden;
+}
+.d-card-head{
+  padding:13px 18px;border-bottom:1px solid var(--bdr2);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:linear-gradient(135deg,rgba(27,58,107,.03),transparent);
+}
+.d-card-title{
+  font-size:13.5px;font-weight:600;color:var(--blue);
+  display:flex;align-items:center;gap:8px;
+}
+.d-card-title svg{width:16px;height:16px;color:var(--gold);}
+.d-card-body{padding:16px 18px;}
+
+/* Bar chart */
+.bar-row{display:flex;align-items:center;gap:11px;margin-bottom:10px;}
 .bar-row:last-child{margin-bottom:0;}
-.bar-label{font-size:12px;color:var(--ink2);min-width:76px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;}
-.bar-track{flex:1;background:var(--bg2);border-radius:4px;height:9px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--green2),var(--green));transition:width .75s cubic-bezier(.4,0,.2,1);}
-.bar-fill.navy{background:linear-gradient(90deg,var(--navy),var(--navy2));}
-.bar-fill.gold{background:var(--gold-gradient);}
-.bar-val{font-family:var(--font-mono);font-size:11px;color:var(--ink3);min-width:28px;text-align:right;font-weight:500;}
+.bar-label{font-size:11.5px;color:var(--ink2);min-width:72px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;}
+.bar-track{flex:1;background:var(--bg2);border-radius:4px;height:8px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--blue3));transition:width .75s cubic-bezier(.4,0,.2,1);}
+.bar-fill.gold {background:var(--gold-grad);}
+.bar-fill.green{background:linear-gradient(90deg,var(--green),#1AAB65);}
+.bar-val{font-family:var(--fm);font-size:11px;color:var(--ink3);min-width:26px;text-align:right;font-weight:500;}
 
-/* TOOLBAR */
-.toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+/* ═══════════════════════════════════════
+   TOOLBAR + SEARCH
+═══════════════════════════════════════ */
+.toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
 .search-wrap{position:relative;flex:1;min-width:200px;}
-.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink4);font-size:13px;pointer-events:none;}
-.search-input{width:100%;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px 9px 36px;color:var(--ink);font-size:13px;outline:none;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-xs);font-weight:400;}
-.search-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-light);}
+.search-ico{
+  position:absolute;left:11px;top:50%;
+  transform:translateY(-50%);color:var(--ink4);
+  pointer-events:none;width:16px;height:16px;
+}
+.search-input{
+  width:100%;background:var(--white);border:1px solid var(--bdr);
+  border-radius:var(--r);padding:9px 12px 9px 34px;
+  color:var(--ink);font-size:13px;outline:none;
+  box-shadow:var(--sh1);transition:border-color .15s,box-shadow .15s;
+}
+.search-input:focus{border-color:var(--blue3);box-shadow:0 0 0 3px var(--blue-light);}
 .search-input::placeholder{color:var(--ink4);}
-.filter-select{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:9px 32px 9px 12px;color:var(--ink);font-size:13px;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23A1A1AA'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;box-shadow:var(--shadow-xs);transition:border-color .15s,box-shadow .15s;font-weight:400;}
-.filter-select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-light);}
+.filter-sel{
+  background:var(--white);border:1px solid var(--bdr);border-radius:var(--r);
+  padding:9px 30px 9px 11px;color:var(--ink);font-size:13px;
+  outline:none;cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236B7280'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+  box-shadow:var(--sh1);transition:border-color .15s;
+}
+.filter-sel:focus{border-color:var(--blue3);}
 
-/* TABLE */
-.table-wrap{border:1px solid var(--border2);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);}
+/* ═══════════════════════════════════════
+   TABLE
+═══════════════════════════════════════ */
+.table-wrap{border:1px solid var(--bdr2);border-radius:var(--r2);overflow:hidden;box-shadow:var(--sh1);}
 table{width:100%;border-collapse:collapse;font-size:13px;background:var(--white);}
-thead{background:var(--navy);}
-thead th{padding:12px 14px;text-align:left;font-size:10px;font-weight:600;color:rgba(255,255,255,.65);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(255,255,255,.05);font-family:var(--font-ui);}
+thead{background:var(--blue);}
+thead th{
+  padding:11px 14px;text-align:left;font-size:9.5px;font-weight:600;
+  color:rgba(255,255,255,.7);letter-spacing:.9px;text-transform:uppercase;
+  white-space:nowrap;border-right:1px solid rgba(255,255,255,.06);
+}
 thead th:last-child{border-right:none;}
-tbody tr{border-bottom:1px solid var(--border2);transition:background .1s;}
-tbody tr:nth-child(even){background:rgba(7,29,63,.018);}
+tbody tr{border-bottom:1px solid var(--bdr2);transition:background .1s;}
+tbody tr:nth-child(even){background:rgba(27,58,107,.02);}
 tbody tr:last-child{border-bottom:none;}
 tbody tr:hover{background:var(--gold-light);cursor:pointer;}
-tbody td{padding:11px 14px;vertical-align:middle;border-right:1px solid var(--border2);}
+tbody td{padding:11px 14px;vertical-align:middle;border-right:1px solid var(--bdr2);}
 tbody td:last-child{border-right:none;}
-.td-item{font-weight:600;color:var(--navy);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.td-mono{font-family:var(--font-mono);font-size:12px;color:var(--green2);font-weight:500;}
-.td-amount{font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--navy);white-space:nowrap;}
-.td-muted{color:var(--ink3);font-size:12.5px;font-weight:400;}
+.td-item{font-weight:600;color:var(--blue);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.td-mono{font-family:var(--fm);font-size:12px;color:var(--green);font-weight:500;}
+.td-amount{font-family:var(--fm);font-size:12px;font-weight:700;color:var(--blue);white-space:nowrap;}
+.td-muted{color:var(--ink3);font-size:12px;}
 
-/* BADGES */
-.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:6px;font-size:10px;font-weight:600;letter-spacing:.3px;font-family:var(--font-ui);}
+/* ═══════════════════════════════════════
+   BADGES
+═══════════════════════════════════════ */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;letter-spacing:.2px;}
 .badge-green{background:var(--green-light);color:var(--green2);border:1px solid var(--green-border);}
-.badge-red{background:var(--red-light);color:var(--red2);border:1px solid var(--red-border);}
-.badge-navy{background:var(--navy-glow);color:var(--navy2);border:1px solid rgba(7,29,63,.12);}
-.badge-gold{background:var(--gold-light);color:var(--gold2);border:1px solid var(--gold-border);}
-.badge-gray{background:var(--bg2);color:var(--ink3);border:1px solid var(--border);}
+.badge-red  {background:var(--red-light);  color:var(--red2);  border:1px solid var(--red-border);}
+.badge-blue {background:var(--blue-light); color:var(--blue2); border:1px solid var(--blue-border);}
+.badge-gold {background:var(--gold-light); color:var(--gold2); border:1px solid var(--gold-border);}
+.badge-gray {background:var(--bg2);        color:var(--ink3);  border:1px solid var(--bdr);}
 
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:var(--radius);padding:9px 17px;font-family:var(--font-ui);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;}
-.btn-primary{background:var(--navy);color:#fff;}
-.btn-primary:hover{background:var(--navy2);transform:translateY(-1px);}
-.btn-green{background:var(--green);color:#fff;}
-.btn-green:hover{background:var(--green2);transform:translateY(-1px);}
-.btn-gold{background:var(--gold-gradient);color:#fff;box-shadow:0 2px 10px rgba(196,138,10,.35);}
+/* ═══════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:6px;border:none;border-radius:var(--r);
+  padding:9px 16px;font-family:var(--fu);font-size:13px;
+  font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.btn svg{width:14px;height:14px;flex-shrink:0;}
+.btn-primary{background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(27,58,107,.25);}
+.btn-primary:hover{background:var(--blue2);transform:translateY(-1px);}
+.btn-gold{background:var(--gold-grad);color:#fff;box-shadow:0 2px 8px rgba(176,124,10,.3);}
 .btn-gold:hover{opacity:.9;transform:translateY(-1px);}
-.btn-outline{background:var(--white);color:var(--ink2);border:1px solid var(--border);box-shadow:var(--shadow-xs);}
-.btn-outline:hover{border-color:var(--navy);color:var(--navy);}
+.btn-outline{background:var(--white);color:var(--ink2);border:1px solid var(--bdr);box-shadow:var(--sh1);}
+.btn-outline:hover{border-color:var(--blue);color:var(--blue);}
 .btn-danger{background:var(--red-light);color:var(--red2);border:1px solid var(--red-border);}
-.btn-danger:hover{background:rgba(184,42,30,.14);}
+.btn-danger:hover{background:rgba(192,39,26,.14);}
 .btn-sm{padding:6px 13px;font-size:12px;}
 
-/* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(7,29,63,.55);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:16px;}
+/* ═══════════════════════════════════════
+   MODAL
+═══════════════════════════════════════ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(15,25,41,.5);
+  z-index:500;display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);padding:16px;
+}
 .modal-overlay.open{display:flex;}
-.modal{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-xl);width:100%;max-width:640px;max-height:90vh;overflow-y:auto;animation:modalIn .22s cubic-bezier(.34,1.3,.64,1);box-shadow:var(--shadow-xl);}
-@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--bg) 0%,var(--white) 100%);border-radius:var(--radius-xl) var(--radius-xl) 0 0;}
-.modal-title{font-family:var(--font-display);font-size:21px;color:var(--navy);font-weight:700;}
-.modal-close{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);width:30px;height:30px;color:var(--ink3);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;transition:all .15s;}
-.modal-close:hover{color:var(--ink);border-color:var(--ink2);background:var(--bg2);}
-.modal-body{padding:22px 24px;}
-.detail-section{margin-bottom:18px;}
-.detail-section-title{font-size:9px;font-weight:700;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border2);}
-.detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--bg2);gap:16px;}
+.modal{
+  background:var(--white);border:1px solid var(--bdr);
+  border-radius:var(--r3);width:100%;max-width:640px;
+  max-height:90vh;overflow-y:auto;
+  animation:modalIn .2s cubic-bezier(.34,1.2,.64,1);
+  box-shadow:var(--sh4);
+}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-header{
+  padding:18px 22px 14px;border-bottom:1px solid var(--bdr2);
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(135deg,rgba(27,58,107,.04),var(--white));
+  border-radius:var(--r3) var(--r3) 0 0;
+}
+.modal-title{font-size:18px;font-weight:700;color:var(--blue);letter-spacing:-.2px;}
+.modal-close{
+  background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r);
+  width:30px;height:30px;color:var(--ink3);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;
+}
+.modal-close svg{width:14px;height:14px;}
+.modal-close:hover{color:var(--red);border-color:var(--red-border);background:var(--red-light);}
+.modal-body{padding:20px 22px;}
+.detail-section{margin-bottom:16px;}
+.detail-section-title{
+  font-size:9px;font-weight:700;color:var(--gold);
+  letter-spacing:1.5px;text-transform:uppercase;
+  margin-bottom:8px;padding-bottom:5px;
+  border-bottom:1px solid var(--bdr2);
+  display:flex;align-items:center;gap:6px;
+}
+.detail-section-title svg{width:11px;height:11px;}
+.detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--bg2);gap:16px;}
 .detail-row:last-child{border-bottom:none;}
 .detail-label{font-size:12px;color:var(--ink3);flex-shrink:0;font-weight:400;}
 .detail-value{font-size:13px;text-align:right;color:var(--ink);word-break:break-all;font-weight:500;}
 
-/* FORM */
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+/* ═══ FORM ═══ */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
 .form-full{grid-column:1/-1;}
 .form-group{display:flex;flex-direction:column;gap:5px;}
 .form-label{font-size:10px;color:var(--ink3);font-weight:600;letter-spacing:.6px;text-transform:uppercase;}
-.form-input,.form-select,.form-textarea{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--ink);font-size:13px;outline:none;transition:border-color .15s,box-shadow .15s;width:100%;font-weight:400;}
-.form-input:focus,.form-select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-light);}
-.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23A1A1AA'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
-.form-actions{display:flex;gap:10px;justify-content:flex-end;padding-top:18px;border-top:1px solid var(--border2);margin-top:18px;}
+.form-input,.form-select,.form-textarea{
+  background:var(--white);border:1px solid var(--bdr);border-radius:var(--r);
+  padding:9px 12px;color:var(--ink);font-size:13px;outline:none;
+  transition:border-color .15s,box-shadow .15s;width:100%;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{
+  border-color:var(--blue3);box-shadow:0 0 0 3px var(--blue-light);
+}
+.form-select{
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236B7280'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;
+}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;padding-top:16px;border-top:1px solid var(--bdr2);margin-top:18px;}
 
-/* UTILITY */
-.loading{text-align:center;padding:64px 20px;color:var(--ink3);font-size:13px;font-weight:400;}
-.loading-spinner{display:inline-block;width:30px;height:30px;border:3px solid var(--bg3);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:14px;}
+/* ═══ UTILITY ═══ */
+.loading{text-align:center;padding:60px 20px;color:var(--ink3);font-size:13px;}
+.loading-spinner{
+  display:inline-block;width:28px;height:28px;
+  border:3px solid var(--bg3);border-top-color:var(--blue);
+  border-radius:50%;animation:spin 1s linear infinite;margin-bottom:12px;
+}
 @keyframes spin{to{transform:rotate(360deg)}}
-.empty{text-align:center;padding:64px 20px;color:var(--ink3);}
-.empty-icon{font-size:46px;margin-bottom:14px;opacity:.35;}
-.empty-text{font-size:14px;margin-bottom:16px;font-weight:400;}
-.toast{position:fixed;bottom:28px;right:28px;background:var(--navy);color:#fff;border-radius:var(--radius-lg);padding:13px 20px;font-size:13px;z-index:999;opacity:0;transform:translateY(10px) scale(.97);pointer-events:none;transition:all .25s cubic-bezier(.34,1.3,.64,1);box-shadow:var(--shadow-lg);max-width:320px;font-weight:500;border:1px solid rgba(255,255,255,.08);}
-.toast.show{opacity:1;transform:translateY(0) scale(1);}
-.toast.success{background:linear-gradient(135deg,var(--green2),var(--green));}
-.toast.error{background:linear-gradient(135deg,var(--red2),var(--red));}
-.fab{display:none;position:fixed;right:20px;bottom:calc(68px + 16px + var(--safe-bot));width:54px;height:54px;border-radius:50%;background:var(--gold-gradient);border:none;color:#fff;font-size:26px;box-shadow:0 4px 20px rgba(196,138,10,.5);align-items:center;justify-content:center;z-index:50;transition:transform .15s,box-shadow .15s;text-shadow:0 1px 2px rgba(0,0,0,.2);}
-.fab:active{transform:scale(.9);box-shadow:0 2px 8px rgba(196,138,10,.4);}
-#bottom-nav{display:none;background:var(--navy-gradient);flex-shrink:0;padding-bottom:var(--safe-bot);border-top:1px solid rgba(196,138,10,.15);box-shadow:0 -4px 20px rgba(7,29,63,.25);}
-.bnav-inner{display:flex;}
-.bnav-btn{flex:1;background:none;border:none;color:rgba(255,255,255,.4);display:flex;flex-direction:column;align-items:center;padding:10px 0 9px;font-size:9px;gap:3px;transition:color .15s;font-family:var(--font-ui);font-weight:600;letter-spacing:.3px;}
-.bnav-btn.active{color:#F0C040;}
-.bnav-icon{font-size:21px;line-height:1;}
-.mobile-cards{display:none;}
-.m-card{background:var(--white);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:15px 17px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s,transform .15s;animation:fadeUp .2s ease both;box-shadow:var(--shadow-xs);}
-.m-card:hover{box-shadow:var(--shadow);transform:translateY(-2px);}
-.m-card-title{font-weight:700;font-size:14px;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:7px;}
-.m-card-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink3);gap:8px;flex-wrap:wrap;}
-.dept-pills{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px;}
-.dept-pill{background:var(--white);border:1px solid var(--border);border-radius:20px;padding:5px 16px;font-size:12px;cursor:pointer;color:var(--ink3);transition:all .15s;white-space:nowrap;box-shadow:var(--shadow-xs);font-weight:500;}
-.dept-pill:hover{border-color:var(--navy);color:var(--navy);}
-.dept-pill.active{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:none;}
+.empty{text-align:center;padding:60px 20px;color:var(--ink3);}
+.empty-icon svg{width:44px;height:44px;opacity:.25;margin:0 auto 14px;display:block;}
+.empty-text{font-size:14px;margin-bottom:16px;}
+.flex-between{display:flex;align-items:center;justify-content:space-between;}
 
-@media(max-width:1100px){.stats-row{grid-template-columns:repeat(2,1fr);}.dash-grid{grid-template-columns:1fr;}}
+.toast{
+  position:fixed;bottom:26px;right:26px;background:var(--blue);
+  color:#fff;border-radius:var(--r2);padding:12px 18px;
+  font-size:13px;z-index:999;opacity:0;
+  transform:translateY(10px) scale(.97);pointer-events:none;
+  transition:all .25s cubic-bezier(.34,1.2,.64,1);
+  box-shadow:var(--sh3);max-width:300px;font-weight:500;
+  display:flex;align-items:center;gap:8px;
+}
+.toast svg{width:16px;height:16px;flex-shrink:0;}
+.toast.show{opacity:1;transform:translateY(0) scale(1);}
+.toast.success{background:var(--green);}
+.toast.error  {background:var(--red);}
+
+/* ── MOBILE CARDS ── */
+.mobile-cards{display:none;}
+.m-card{
+  background:var(--white);border:1px solid var(--bdr2);
+  border-left:3px solid var(--bdr);border-radius:var(--r2);
+  padding:14px 16px;margin-bottom:9px;
+  cursor:pointer;transition:all .15s;animation:fadeUp .2s ease both;
+  box-shadow:var(--sh1);
+}
+.m-card:hover{border-left-color:var(--gold);box-shadow:var(--sh2);transform:translateY(-1px);}
+.m-card-title{font-weight:600;font-size:14px;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px;}
+.m-card-row{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--ink3);gap:8px;flex-wrap:wrap;}
+
+/* ── FAB ── */
+.fab{
+  display:none;position:fixed;right:18px;
+  bottom:calc(58px + 14px + var(--safe-bot));
+  width:52px;height:52px;border-radius:14px;
+  background:var(--gold-grad);border:none;color:#fff;
+  box-shadow:0 4px 18px rgba(176,124,10,.45);
+  align-items:center;justify-content:center;z-index:50;
+  transition:transform .15s,box-shadow .15s;
+}
+.fab svg{width:24px;height:24px;}
+.fab:active{transform:scale(.9);}
+
+/* ── DEPT PILLS ── */
+.dept-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.dept-pill{
+  background:var(--white);border:1px solid var(--bdr);
+  border-radius:20px;padding:5px 14px;font-size:12px;
+  cursor:pointer;color:var(--ink3);
+  transition:all .15s;white-space:nowrap;
+  box-shadow:var(--sh1);font-weight:500;
+}
+.dept-pill:hover{border-color:var(--blue);color:var(--blue);}
+.dept-pill.active{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:none;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px){
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .dash-grid{grid-template-columns:1fr;}
+}
 @media(max-width:768px){
-  .page{padding:16px 14px calc(12px + var(--safe-bot));}
+  :root{--bar-h:54px;}
+  .page{padding:14px 14px calc(12px + var(--safe-bot));}
   .stats-row{grid-template-columns:1fr 1fr;gap:10px;}
-  .stat-card{padding:16px 14px;}
+  .stat-card{padding:15px 14px;}
   .stat-num{font-size:28px;}
-  .stat-num.sm{font-size:19px;}
+  .stat-num.sm{font-size:17px;}
+  .dash-grid{grid-template-columns:1fr;}
   #tab-nav{display:none;}
   #mobile-menu-btn{display:flex;}
-  .topbar-clock{display:none;}
+  .tb-clock{display:none;}
   .form-grid{grid-template-columns:1fr;}
   .form-actions{flex-direction:column-reverse;}
   .form-actions .btn{width:100%;justify-content:center;}
   .modal-overlay{align-items:flex-end;padding:0;}
-  .modal{max-width:100%;border-radius:20px 20px 0 0;max-height:90dvh;}
+  .modal{max-width:100%;border-radius:18px 18px 0 0;max-height:90dvh;}
   .table-wrap{display:none;}
   .mobile-cards{display:block;}
   .hide-mobile{display:none!important;}
   #bottom-nav{display:block;}
   .fab{display:flex;}
-  .page-heading{font-size:26px;}
-  .topbar-brand{padding:0 14px;}
-  .topbar-right{padding:0 12px;}
+  .page-title{font-size:22px;}
+  .page-header{margin-bottom:16px;}
+  .tb-name{font-size:14px;}
+  .tb-sub{display:none;}
+  .tb-brand{padding:0 14px;}
+  .tb-right{padding:0 12px;}
+}
+@media(max-width:390px){
+  .stats-row{gap:8px;}
+  .stat-num{font-size:24px;}
+  .page-title{font-size:19px;}
+  .badge{font-size:10px;padding:2px 8px;}
+  .modal-title{font-size:17px;}
+  .modal-body{padding:14px 16px;}
 }
 </style>
-
 </head>
 <body>
 <div id="shell">
 
-  <!-- ── TOPBAR ── -->
-  <div id="topbar">
-    <div class="topbar-brand">
-      <img src="./logo.png" class="brand-seal-img" alt="Balayan Seal">
-      <div class="brand-text">
-        <div class="brand-title">Annual Procurement Plan</div>
-        <div class="brand-sub">Balayan, Batangas</div>
-      </div>
+<!-- ═══ TOP BAR ═══ -->
+<div id="topbar">
+  <div class="tb-brand">
+    <img class="tb-seal" src="./logo.png" alt="Balayan Seal"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="tb-seal-fb">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>
     </div>
-    <button id="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
-    <div id="tab-nav">
-      <div class="tab-divider"></div>
-      <button class="tab-btn active" id="tab-dashboard" onclick="switchPage('dashboard')"><span class="tab-icon">📊</span>Dashboard</button>
-      <div class="tab-divider"></div>
-      <button class="tab-btn" id="tab-items" onclick="switchPage('items')"><span class="tab-icon">📦</span>All Items<span class="tab-badge" id="badge-all">—</span></button>
-      <div class="tab-divider"></div>
-      <button class="tab-btn" id="tab-GSO"  onclick="switchDept('GSO')"><span class="tab-icon">🏢</span>GSO<span class="tab-badge" id="badge-GSO">0</span></button>
-      <button class="tab-btn" id="tab-ICT"  onclick="switchDept('ICT')"><span class="tab-icon">💻</span>ICT<span class="tab-badge" id="badge-ICT">0</span></button>
-      <button class="tab-btn" id="tab-MPDC" onclick="switchDept('MPDC')"><span class="tab-icon">🏗</span>MPDC<span class="tab-badge" id="badge-MPDC">0</span></button>
-      <button class="tab-btn" id="tab-PESO" onclick="switchDept('PESO')"><span class="tab-icon">👷</span>PESO<span class="tab-badge" id="badge-PESO">0</span></button>
-      <button class="tab-btn" id="tab-MHO"  onclick="switchDept('MHO')"><span class="tab-icon">🏥</span>MHO<span class="tab-badge" id="badge-MHO">0</span></button>
-      <button class="tab-btn" id="tab-HRMO" onclick="switchDept('HRMO')"><span class="tab-icon">👥</span>HRMO<span class="tab-badge" id="badge-HRMO">0</span></button>
-      <div class="tab-divider"></div>
-    </div>
-    <div class="topbar-right">
-      <div class="topbar-clock" id="topbar-clock"></div>
-      <button class="btn-add" id="topbar-add-btn" onclick="openAddModal()">＋ Add Item</button>
+    <div>
+      <div class="tb-name">APP-CSE 2025</div>
+      <div class="tb-sub">Balayan, Batangas</div>
     </div>
   </div>
 
-  <!-- ── MOBILE DRAWER (hidden tab nav) ── -->
-  <div id="mobile-drawer" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(13,31,60,.6);backdrop-filter:blur(3px)" onclick="toggleMobileMenu()">
-    <div style="background:linear-gradient(160deg,#0E2D5E,#071D3F);width:250px;height:100%;padding:0;overflow-y:auto;border-right:1px solid rgba(196,138,10,.15);box-shadow:4px 0 32px rgba(7,29,63,.5)" onclick="e=>e.stopPropagation()">
-      <div style="padding:18px 20px 16px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:8px;display:flex;align-items:center;gap:12px">
-        <img src="./logo.png" style="width:34px;height:34px;border-radius:50%;box-shadow:0 0 0 2px rgba(196,138,10,.5)" alt="Seal">
-        <div>
-          <div style="font-family:'Playfair Display',serif;font-size:16px;color:#fff;font-weight:700">Annual Procurement Plan</div>
-          <div style="font-size:10px;color:rgba(255,255,255,.38);letter-spacing:.8px;text-transform:uppercase">Municipality of Balayan</div>
-        </div>
-      </div>
-      <button onclick="switchPage('dashboard');toggleMobileMenu()" style="display:flex;align-items:center;gap:10px;padding:10px 20px;color:rgba(255,255,255,.7);background:none;border:none;width:100%;font-size:14px;cursor:pointer">📊 Dashboard</button>
-      <button onclick="switchPage('items');toggleMobileMenu()" style="display:flex;align-items:center;gap:10px;padding:10px 20px;color:rgba(255,255,255,.7);background:none;border:none;width:100%;font-size:14px;cursor:pointer">📦 All Items</button>
-      <div style="font-size:10px;color:rgba(255,255,255,.3);padding:12px 20px 4px;letter-spacing:1px;text-transform:uppercase">Departments</div>
-      <button onclick="switchDept('GSO');toggleMobileMenu()" style="display:flex;align-items:center;justify-content:space-between;padding:9px 20px;color:rgba(255,255,255,.7);background:none;border:none;width:100%;font-size:13px;cursor:pointer">GSO<span id="mdrawer-GSO" style="font-size:10px;color:rgba(255,255,255,.4)">0</span></button>
-      <button onclick="switchDept('ICT');toggleMobileMenu()" style="display:flex;align-items:center;justify-content:space-between;padding:9px 20px;color:rgba(255,255,255,.7);background:none;border:none;width:100%;font-size:13px;cursor:pointer">ICT<span id="mdrawer-ICT" style="font-size:10px;color:rgba(255,255,255,.4)">0</span></button>
-      <button onclick="switchDept('MPDC');toggleMobileMenu()" style="display:flex;align-items:center;justify-content:space-between;padding:9px 20px;color:rgba(255,255,255,.7);background:none;border:none;width:100%;font-size:13px;cursor:pointer">MPDC<span id="mdrawer-MPDC" style="font-size:10px;color:rgba(255,255,255,.4)">0</span></button>
-      <button onclick="switchDept('PESO');toggleMobileMenu()" style="display:flex;align-items:center;justify-content:space-between;padding:9px 20px;color:rgba(255,255,255,.7);background:none;border:none;width:100%;font-size:13px;cursor:pointer">PESO<span id="mdrawer-PESO" style="font-size:10px;color:rgba(255,255,255,.4)">0</span></button>
-      <button onclick="switchDept('MHO');toggleMobileMenu()" style="display:flex;align-items:center;justify-content:space-between;padding:9px 20px;color:rgba(255,255,255,.7);background:none;border:none;width:100%;font-size:13px;cursor:pointer">MHO<span id="mdrawer-MHO" style="font-size:10px;color:rgba(255,255,255,.4)">0</span></button>
-      <button onclick="switchDept('HRMO');toggleMobileMenu()" style="display:flex;align-items:center;justify-content:space-between;padding:9px 20px;color:rgba(255,255,255,.7);background:none;border:none;width:100%;font-size:13px;cursor:pointer">HRMO<span id="mdrawer-HRMO" style="font-size:10px;color:rgba(255,255,255,.4)">0</span></button>
-    </div>
+  <button id="mobile-menu-btn" onclick="toggleMobileMenu()">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+  </button>
+
+  <div id="tab-nav">
+    <div class="tb-divider"></div>
+    <button class="tab-btn active" id="tab-dashboard" onclick="switchPage('dashboard')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+      Dashboard
+    </button>
+    <div class="tb-divider"></div>
+    <button class="tab-btn" id="tab-items" onclick="switchPage('items')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>
+      All Items<span class="tab-badge" id="badge-all">—</span>
+    </button>
+    <div class="tb-divider"></div>
+    <button class="tab-btn" id="tab-GSO"  onclick="switchDept('GSO')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="10" rx="1.5"/><path d="M6 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+      GSO<span class="tab-badge" id="badge-GSO">0</span>
+    </button>
+    <button class="tab-btn" id="tab-ICT"  onclick="switchDept('ICT')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="16" height="11" rx="1.5"/><path d="M7 18h6M10 15v3"/></svg>
+      ICT<span class="tab-badge" id="badge-ICT">0</span>
+    </button>
+    <button class="tab-btn" id="tab-MPDC" onclick="switchDept('MPDC')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l8 7H2l8-7z"/><rect x="7" y="9" width="6" height="9"/></svg>
+      MPDC<span class="tab-badge" id="badge-MPDC">0</span>
+    </button>
+    <button class="tab-btn" id="tab-PESO" onclick="switchDept('PESO')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="6" r="3"/><path d="M4 18c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      PESO<span class="tab-badge" id="badge-PESO">0</span>
+    </button>
+    <button class="tab-btn" id="tab-MHO"  onclick="switchDept('MHO')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v14M3 10h14"/><rect x="2" y="2" width="16" height="16" rx="2"/></svg>
+      MHO<span class="tab-badge" id="badge-MHO">0</span>
+    </button>
+    <button class="tab-btn" id="tab-HRMO" onclick="switchDept('HRMO')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="6" r="2.5"/><circle cx="13" cy="6" r="2.5"/><path d="M1 18c0-2.8 2.7-5 6-5M19 18c0-2.8-2.7-5-6-5M7 13c1.8-1 4.2-1 6 0"/></svg>
+      HRMO<span class="tab-badge" id="badge-HRMO">0</span>
+    </button>
+    <div class="tb-divider"></div>
   </div>
 
-  <div id="offline-banner">📵 Offline — view only. Changes cannot be saved.</div>
-
-  <div id="content">
-    <!-- DASHBOARD -->
-    <div class="page active" id="page-dashboard">
-      <div id="dash-inner"><div class="loading"><div class="loading-spinner"></div><br>Loading procurement data…</div></div>
-    </div>
-    <!-- ALL ITEMS -->
-    <div class="page" id="page-items">
-      <div class="page-header">
-        <div>
-          <div class="page-heading">All <span>Procurement</span> Items</div>
-          <div class="page-sub">Annual Procurement Plan — All Departments &nbsp;<span id="items-count" style="font-size:12px;background:var(--paper2);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-family:var(--font-mono)"></span></div>
-        </div>
-        <div class="header-actions">
-          <button class="btn btn-outline btn-sm" onclick="printAll()">🖨 Print All</button>
-          <button class="btn btn-gold btn-sm" onclick="openAddModal()">＋ Add Item</button>
-        </div>
-      </div>
-      <div class="toolbar">
-        <div class="search-wrap"><span class="search-icon">🔍</span><input class="search-input" id="items-search" placeholder="Search items…" oninput="filterItems()"></div>
-        <select class="filter-select" id="items-dept" onchange="filterItems()">
-          <option value="">All Departments</option>
-          <option>GSO</option><option>ICT</option><option>MPDC</option>
-          <option>PESO</option><option>MHO</option><option>HRMO</option>
-        </select>
-        <select class="filter-select" id="items-type" onchange="filterItems()">
-          <option value="">All Types</option>
-          <option>CSE</option><option>Other Supplies</option><option>Machinery</option>
-        </select>
-        <select class="filter-select" id="items-month" onchange="filterItems()">
-          <option value="">All Months</option>
-          <option>January</option><option>February</option><option>March</option><option>April</option>
-          <option>May</option><option>June</option><option>July</option><option>August</option>
-          <option>September</option><option>October</option><option>November</option><option>December</option>
-        </select>
-      </div>
-      <div id="items-table"></div>
-      <div class="mobile-cards" id="items-cards"></div>
-    </div>
-    <!-- DEPT PAGE -->
-    <div class="page" id="page-dept">
-      <div class="page-header">
-        <div>
-          <div class="page-heading" id="dept-heading">Department</div>
-          <div class="page-sub" id="dept-sub"></div>
-        </div>
-        <div class="header-actions">
-          <button class="btn btn-outline btn-sm" id="dept-print-btn" onclick="printDept()" style="display:none">🖨 Print</button>
-          <button class="btn btn-gold btn-sm" onclick="openAddModal()">＋ Add Item</button>
-        </div>
-      </div>
-      <div class="toolbar">
-        <div class="search-wrap"><span class="search-icon">🔍</span><input class="search-input" id="dept-search" placeholder="Search items…" oninput="filterDept()"></div>
-        <select class="filter-select" id="dept-type-filter" onchange="filterDept()">
-          <option value="">All Types</option>
-          <option>CSE</option><option>Other Supplies</option><option>Machinery</option>
-        </select>
-        <select class="filter-select" id="dept-month-filter" onchange="filterDept()">
-          <option value="">All Months</option>
-          <option>January</option><option>February</option><option>March</option><option>April</option>
-          <option>May</option><option>June</option><option>July</option><option>August</option>
-          <option>September</option><option>October</option><option>November</option><option>December</option>
-        </select>
-      </div>
-      <div id="dept-table"></div>
-      <div class="mobile-cards" id="dept-cards"></div>
-    </div>
-  </div>
-
-  <div id="bottom-nav">
-    <div class="bnav-inner">
-      <button class="bnav-btn active" id="bnav-dashboard" onclick="switchPage('dashboard')"><span class="bnav-icon">📊</span>Dashboard</button>
-      <button class="bnav-btn" id="bnav-items" onclick="switchPage('items')"><span class="bnav-icon">📦</span>All Items</button>
-      <button class="bnav-btn" id="bnav-dept" onclick="switchPage('dept')"><span class="bnav-icon">🏢</span>Dept</button>
-    </div>
+  <div class="tb-right">
+    <div class="tb-clock" id="topbar-clock"></div>
+    <button class="btn-add-top" id="topbar-add-btn" onclick="openAddModal()">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+      Add Item
+    </button>
   </div>
 </div>
 
-<!-- MODALS -->
+<!-- ═══ MOBILE DRAWER ═══ -->
+<div id="mobile-drawer" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(15,25,41,.55);backdrop-filter:blur(4px)" onclick="toggleMobileMenu()">
+  <div style="background:var(--blue);width:260px;height:100%;overflow-y:auto;box-shadow:4px 0 28px rgba(15,25,41,.4)" onclick="event.stopPropagation()">
+    <div style="padding:18px 18px 14px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:6px;display:flex;align-items:center;gap:12px">
+      <img src="./logo.png" style="width:36px;height:36px;border-radius:50%;box-shadow:0 0 0 2px rgba(212,152,14,.6)" alt="Seal">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#fff">APP-CSE 2025</div>
+        <div style="font-size:9.5px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px">Municipality of Balayan</div>
+      </div>
+    </div>
+    <button onclick="switchPage('dashboard');toggleMobileMenu()" style="display:flex;align-items:center;gap:10px;padding:11px 18px;color:rgba(255,255,255,.75);background:none;border:none;width:100%;font-size:13.5px;cursor:pointer;font-family:var(--fu);font-weight:500">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+      Dashboard
+    </button>
+    <button onclick="switchPage('items');toggleMobileMenu()" style="display:flex;align-items:center;gap:10px;padding:11px 18px;color:rgba(255,255,255,.75);background:none;border:none;width:100%;font-size:13.5px;cursor:pointer;font-family:var(--fu);font-weight:500">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>
+      All Items
+    </button>
+    <div style="font-size:9px;color:rgba(255,255,255,.35);padding:12px 18px 5px;letter-spacing:1.2px;text-transform:uppercase;font-weight:600">Departments</div>
+    <button onclick="switchDept('GSO');toggleMobileMenu()"  style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;color:rgba(255,255,255,.75);background:none;border:none;width:100%;font-size:13px;cursor:pointer;font-family:var(--fu)">GSO<span id="mdrawer-GSO"  style="font-size:10px;background:rgba(212,152,14,.25);color:#FFD968;padding:1px 8px;border-radius:10px;font-family:var(--fm)">0</span></button>
+    <button onclick="switchDept('ICT');toggleMobileMenu()"  style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;color:rgba(255,255,255,.75);background:none;border:none;width:100%;font-size:13px;cursor:pointer;font-family:var(--fu)">ICT<span id="mdrawer-ICT"  style="font-size:10px;background:rgba(212,152,14,.25);color:#FFD968;padding:1px 8px;border-radius:10px;font-family:var(--fm)">0</span></button>
+    <button onclick="switchDept('MPDC');toggleMobileMenu()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;color:rgba(255,255,255,.75);background:none;border:none;width:100%;font-size:13px;cursor:pointer;font-family:var(--fu)">MPDC<span id="mdrawer-MPDC" style="font-size:10px;background:rgba(212,152,14,.25);color:#FFD968;padding:1px 8px;border-radius:10px;font-family:var(--fm)">0</span></button>
+    <button onclick="switchDept('PESO');toggleMobileMenu()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;color:rgba(255,255,255,.75);background:none;border:none;width:100%;font-size:13px;cursor:pointer;font-family:var(--fu)">PESO<span id="mdrawer-PESO" style="font-size:10px;background:rgba(212,152,14,.25);color:#FFD968;padding:1px 8px;border-radius:10px;font-family:var(--fm)">0</span></button>
+    <button onclick="switchDept('MHO');toggleMobileMenu()"  style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;color:rgba(255,255,255,.75);background:none;border:none;width:100%;font-size:13px;cursor:pointer;font-family:var(--fu)">MHO<span id="mdrawer-MHO"  style="font-size:10px;background:rgba(212,152,14,.25);color:#FFD968;padding:1px 8px;border-radius:10px;font-family:var(--fm)">0</span></button>
+    <button onclick="switchDept('HRMO');toggleMobileMenu()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;color:rgba(255,255,255,.75);background:none;border:none;width:100%;font-size:13px;cursor:pointer;font-family:var(--fu)">HRMO<span id="mdrawer-HRMO" style="font-size:10px;background:rgba(212,152,14,.25);color:#FFD968;padding:1px 8px;border-radius:10px;font-family:var(--fm)">0</span></button>
+  </div>
+</div>
+
+<!-- ═══ OFFLINE BANNER ═══ -->
+<div id="offline-banner">
+  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 2l16 16"/><path d="M8.5 5.2A6 6 0 0116 10M4 7.5A6 6 0 013.5 10M6.5 10A5 5 0 0110 8.5M10 12a2 2 0 010 4 2 2 0 010-4"/></svg>
+  Offline — view only. Changes cannot be saved.
+</div>
+
+<!-- ═══ CONTENT ═══ -->
+<div id="content">
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div id="dash-inner"><div class="loading"><div class="loading-spinner"></div><br>Loading procurement data…</div></div>
+  </div>
+  <!-- ALL ITEMS -->
+  <div class="page" id="page-items">
+    <div class="page-header">
+      <div>
+        <div class="page-title">All <em>Procurement</em> Items</div>
+        <div class="page-sub">Annual Procurement Plan — All Departments &nbsp;<span id="items-count" style="font-size:11px;background:var(--bg2);border:1px solid var(--bdr);border-radius:20px;padding:2px 10px;font-family:var(--fm)"></span></div>
+      </div>
+      <div class="hdr-actions">
+        <button class="btn btn-outline btn-sm" onclick="printAll()">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7V3h8v4"/><rect x="3" y="7" width="14" height="8" rx="1.5"/><path d="M6 13h8M6 15v2h8v-2"/></svg>
+          Print All
+        </button>
+        <button class="btn btn-gold btn-sm" onclick="openAddModal()">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+          Add Item
+        </button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg class="search-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M17 17l-3.5-3.5"/></svg>
+        <input class="search-input" id="items-search" placeholder="Search items…" oninput="filterItems()">
+      </div>
+      <select class="filter-sel" id="items-dept" onchange="filterItems()">
+        <option value="">All Departments</option>
+        <option>GSO</option><option>ICT</option><option>MPDC</option>
+        <option>PESO</option><option>MHO</option><option>HRMO</option>
+      </select>
+      <select class="filter-sel" id="items-type" onchange="filterItems()">
+        <option value="">All Types</option>
+        <option>CSE</option><option>Other Supplies</option><option>Machinery</option>
+      </select>
+      <select class="filter-sel" id="items-month" onchange="filterItems()">
+        <option value="">All Months</option>
+        <option>January</option><option>February</option><option>March</option><option>April</option>
+        <option>May</option><option>June</option><option>July</option><option>August</option>
+        <option>September</option><option>October</option><option>November</option><option>December</option>
+      </select>
+    </div>
+    <div id="items-table"></div>
+    <div class="mobile-cards" id="items-cards"></div>
+  </div>
+  <!-- DEPT PAGE -->
+  <div class="page" id="page-dept">
+    <div class="page-header">
+      <div>
+        <div class="page-title" id="dept-heading">Department</div>
+        <div class="page-sub" id="dept-sub"></div>
+      </div>
+      <div class="hdr-actions">
+        <button class="btn btn-outline btn-sm" id="dept-print-btn" onclick="printDept()" style="display:none">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7V3h8v4"/><rect x="3" y="7" width="14" height="8" rx="1.5"/><path d="M6 13h8M6 15v2h8v-2"/></svg>
+          Print
+        </button>
+        <button class="btn btn-gold btn-sm" onclick="openAddModal()">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+          Add Item
+        </button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg class="search-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M17 17l-3.5-3.5"/></svg>
+        <input class="search-input" id="dept-search" placeholder="Search items…" oninput="filterDept()">
+      </div>
+      <select class="filter-sel" id="dept-type-filter" onchange="filterDept()">
+        <option value="">All Types</option>
+        <option>CSE</option><option>Other Supplies</option><option>Machinery</option>
+      </select>
+      <select class="filter-sel" id="dept-month-filter" onchange="filterDept()">
+        <option value="">All Months</option>
+        <option>January</option><option>February</option><option>March</option><option>April</option>
+        <option>May</option><option>June</option><option>July</option><option>August</option>
+        <option>September</option><option>October</option><option>November</option><option>December</option>
+      </select>
+    </div>
+    <div id="dept-table"></div>
+    <div class="mobile-cards" id="dept-cards"></div>
+  </div>
+</div>
+
+<!-- ═══ BOTTOM NAV ═══ -->
+<div id="bottom-nav">
+  <div class="bnav-inner">
+    <button class="bnav-btn active" id="bnav-dashboard" onclick="switchPage('dashboard')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+      Dashboard
+    </button>
+    <button class="bnav-btn" id="bnav-items" onclick="switchPage('items')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>
+      All Items
+    </button>
+    <button class="bnav-btn" id="bnav-dept" onclick="switchPage('dept')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="10" rx="1.5"/><path d="M6 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+      Dept
+    </button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ MODALS ═══ -->
 <div class="modal-overlay" id="modal-item" onclick="closeOverlay(event,'modal-item')">
   <div class="modal">
-    <div class="modal-header"><div class="modal-title" id="item-modal-title">Item</div><button class="modal-close" onclick="closeModal('modal-item')">✕</button></div>
+    <div class="modal-header">
+      <div class="modal-title" id="item-modal-title">Item</div>
+      <button class="modal-close" onclick="closeModal('modal-item')">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+      </button>
+    </div>
     <div class="modal-body" id="item-modal-body"></div>
   </div>
 </div>
 <div class="modal-overlay" id="modal-form" onclick="closeOverlay(event,'modal-form')">
   <div class="modal">
-    <div class="modal-header"><div class="modal-title" id="form-title">Add Item</div><button class="modal-close" onclick="closeModal('modal-form')">✕</button></div>
+    <div class="modal-header">
+      <div class="modal-title" id="form-title">Add Item</div>
+      <button class="modal-close" onclick="closeModal('modal-form')">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+      </button>
+    </div>
     <div class="modal-body" id="form-body"></div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
-<button class="fab" id="fab-btn" onclick="openAddModal()">＋</button>
+<button class="fab" id="fab-btn" onclick="openAddModal()">
+  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+</button>
 
+<!-- ═══ FIREBASE ═══ -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
@@ -454,7 +814,8 @@ const firebaseConfig = {
     const app = initializeApp(firebaseConfig, 'app-cse');
     const db  = getFirestore(app);
 
-    let isOnline = navigator.onLine;
+    // ── Online/Offline — default ONLINE, only change on real events ──
+    let isOnline = true;
     function setOnlineState(online){
       isOnline = online;
       document.getElementById('offline-banner').classList.toggle('show', !online);
@@ -462,7 +823,6 @@ const firebaseConfig = {
     }
     window.addEventListener('online',  ()=>{ setOnlineState(true);  toast('Back online!','success'); });
     window.addEventListener('offline', ()=>{ setOnlineState(false); });
-    setOnlineState(navigator.onLine);
 
     const S = { page:'dashboard', dept:null, items:[], editId:null,
       itemSearch:'', itemDept:'', itemType:'', itemMonth:'',
@@ -476,16 +836,15 @@ const firebaseConfig = {
       try {
         const s = await Promise.race([
           getDocs(col()),
-          new Promise((_,reject) => setTimeout(()=>reject(new Error('Firestore timeout — check your security rules (allow read: if true)')), 10000))
+          new Promise((_,rej)=>setTimeout(()=>rej(new Error('Firestore timeout — check security rules (allow read: if true)')),10000))
         ]);
         return s.docs.map(d=>({id:d.id,...d.data()}));
       } catch(err) {
-        const el = document.getElementById('dash-inner') || document.getElementById('items-table') || document.getElementById('dept-table');
-        if(el) el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#ef4444;font-size:13px">
-          <div style="font-size:32px;margin-bottom:12px">⚠️</div>
-          <div style="font-weight:700;margin-bottom:6px">Failed to load data</div>
-          <div style="color:#94a3b8;font-family:monospace;font-size:11px;background:#0d1020;padding:10px;border-radius:6px;margin-top:8px;word-break:break-all">${err.message}</div>
-          <div style="margin-top:12px;color:#94a3b8;font-size:12px">Check Firestore Rules: allow read, write: if true;</div>
+        const el=document.getElementById('dash-inner')||document.getElementById('items-table')||document.getElementById('dept-table');
+        if(el) el.innerHTML=`<div style="text-align:center;padding:40px 20px">
+          <svg style="width:44px;height:44px;color:#C0271A;margin:0 auto 12px;display:block" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2l8 16H2L10 2z"/><path d="M10 8v4M10 14v.5"/></svg>
+          <div style="font-weight:700;font-size:14px;color:#C0271A;margin-bottom:6px">Failed to load data</div>
+          <div style="font-size:11px;color:#6B7280;font-family:var(--fm);background:#F4F6FA;padding:8px;border-radius:6px;word-break:break-all">${err.message}</div>
         </div>`;
         throw err;
       }
@@ -501,30 +860,20 @@ const firebaseConfig = {
     }
     setInterval(updateTime,1000); updateTime();
 
-    // Nav
-    function switchPage(pg){
-      S.page=pg; S.dept=null;
-      activatePage(pg);
-      if(pg==='dashboard') loadDashboard();
-      else if(pg==='items') loadItems();
-    }
+    // Navigation
+    function switchPage(pg){ S.page=pg; S.dept=null; activatePage(pg); if(pg==='dashboard') loadDashboard(); else if(pg==='items') loadItems(); }
     window.switchPage=switchPage;
-
     function switchDept(dept){
-      S.page='dept'; S.dept=dept;
-      activatePage('dept');
-      document.getElementById('dept-heading').innerHTML=`<span>${dept}</span> Department`;
+      S.page='dept'; S.dept=dept; activatePage('dept');
+      document.getElementById('dept-heading').innerHTML=`<em>${dept}</em> Department`;
       document.getElementById('dept-sub').textContent=`Annual Procurement Plan — ${dept}`;
-      // Show print button on dept page
-      const pb = document.getElementById('dept-print-btn');
-      if(pb) pb.style.display='';
+      const pb=document.getElementById('dept-print-btn'); if(pb) pb.style.display='';
       document.querySelectorAll('.tab-btn,.bnav-btn').forEach(b=>b.classList.remove('active'));
       document.getElementById(`tab-${dept}`)?.classList.add('active');
       document.getElementById('bnav-dept')?.classList.add('active');
       filterDeptPage();
     }
     window.switchDept=switchDept;
-
     function activatePage(pg){
       document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
       document.getElementById(`page-${pg}`).classList.add('active');
@@ -534,28 +883,21 @@ const firebaseConfig = {
       document.getElementById(`bnav-${pg}`)?.classList.add('active');
     }
     window.refreshCurrent=()=>{ if(S.dept) switchDept(S.dept); else switchPage(S.page); };
-
-    function toggleMobileMenu(){
-      const d=document.getElementById('mobile-drawer');
-      d.style.display=d.style.display==='none'?'block':'none';
-    }
+    function toggleMobileMenu(){ const d=document.getElementById('mobile-drawer'); d.style.display=d.style.display==='none'?'block':'none'; }
     window.toggleMobileMenu=toggleMobileMenu;
 
     // Dashboard
     async function loadDashboard(){
       const el=document.getElementById('dash-inner');
       el.innerHTML='<div class="loading"><div class="loading-spinner"></div><br>Loading procurement data…</div>';
-      try {
-        S.items=await getAll();
-      } catch(e) { return; }
+      try { S.items=await getAll(); } catch(e){ return; }
       updateBadges();
 
       const total=S.items.length;
       const totalAmt=S.items.reduce((s,i)=>s+parseFloat(i.total_amount||0),0);
       const avail=S.items.filter(i=>!(i.availability||'').toLowerCase().includes('not')).length;
       const notAvail=S.items.filter(i=>(i.availability||'').toLowerCase().includes('not')).length;
-
-      const byDept={}, byType={}, byMonth={};
+      const byDept={},byType={},byMonth={};
       S.items.forEach(i=>{
         const d=i.department||'N/A'; byDept[d]=(byDept[d]||0)+1;
         const t=i.type||'N/A'; byType[t]=(byType[t]||0)+1;
@@ -567,34 +909,43 @@ const firebaseConfig = {
       const maxD=Math.max(...dArr.map(x=>x[1]),1);
       const maxT=Math.max(...tArr.map(x=>x[1]),1);
       const maxM=Math.max(...mArr.map(x=>x[1]),1);
-
       const barRow=(label,val,max,cls='')=>`<div class="bar-row"><div class="bar-label" title="${label}">${label}</div><div class="bar-track"><div class="bar-fill ${cls}" style="width:${Math.round(val/max*100)}%"></div></div><div class="bar-val">${val}</div></div>`;
 
       el.innerHTML=`
-        <div class="page-header">
-          <div>
-            <div class="page-heading">Procurement <span>Overview</span></div>
-            <div class="page-sub">Annual Procurement Plan — Annual Procurement Plan for Common-Use Supplies and Equipment</div>
-          </div>
-        </div>
+        <div class="page-header"><div><div class="page-title">Procurement <em>Overview</em></div><div class="page-sub">APP-CSE 2025 — Annual Procurement Plan for Common-Use Supplies and Equipment</div></div></div>
         <div class="stats-row">
-          <div class="stat-card navy" style="animation-delay:.0s"><div class="stat-icon">📦</div><div class="stat-label">Total Items</div><div class="stat-num">${total}</div></div>
-          <div class="stat-card gold" style="animation-delay:.07s"><div class="stat-icon">💰</div><div class="stat-label">Total Budget</div><div class="stat-num sm gold">₱${totalAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</div></div>
-          <div class="stat-card green" style="animation-delay:.14s"><div class="stat-icon">✅</div><div class="stat-label">Available</div><div class="stat-num green">${avail}</div></div>
-          <div class="stat-card red" style="animation-delay:.21s"><div class="stat-icon">⛔</div><div class="stat-label">Not Available</div><div class="stat-num red">${notAvail}</div></div>
+          <div class="stat-card c-blue" style="animation-delay:.0s">
+            <div class="stat-wm"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg></div>
+            <div class="stat-label">Total Items</div><div class="stat-num">${total}</div>
+          </div>
+          <div class="stat-card c-gold" style="animation-delay:.07s">
+            <div class="stat-wm"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="16" height="10" rx="1.5"/><circle cx="10" cy="10" r="2.5"/></svg></div>
+            <div class="stat-label">Total Budget</div><div class="stat-num sm c-gold">₱${totalAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</div>
+          </div>
+          <div class="stat-card c-green" style="animation-delay:.14s">
+            <div class="stat-wm"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><circle cx="10" cy="10" r="8"/><path d="M6 10l3 3 5-5"/></svg></div>
+            <div class="stat-label">Available</div><div class="stat-num c-green">${avail}</div>
+          </div>
+          <div class="stat-card c-red" style="animation-delay:.21s">
+            <div class="stat-wm"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><circle cx="10" cy="10" r="8"/><path d="M10 7v4M10 13v.5"/></svg></div>
+            <div class="stat-label">Not Available</div><div class="stat-num c-red">${notAvail}</div>
+          </div>
         </div>
         <div class="dash-grid">
-          <div class="dash-card">
-            <div class="dash-card-head"><div class="dash-card-title">🏢 By Department</div><button class="btn btn-outline btn-sm" onclick="switchPage('items')">View All →</button></div>
-            <div class="dash-card-body">${dArr.map(([d,c])=>barRow(d,c,maxD)).join('')||'<div style="color:var(--ink3);font-size:13px">No data yet</div>'}</div>
+          <div class="d-card">
+            <div class="d-card-head">
+              <div class="d-card-title"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="10" rx="1.5"/><path d="M6 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>By Department</div>
+              <button class="btn btn-outline btn-sm" onclick="switchPage('items')">View All →</button>
+            </div>
+            <div class="d-card-body">${dArr.map(([d,c])=>barRow(d,c,maxD)).join('')||'<div style="color:var(--ink3);font-size:13px">No data yet</div>'}</div>
           </div>
-          <div class="dash-card">
-            <div class="dash-card-head"><div class="dash-card-title">📂 By Type</div></div>
-            <div class="dash-card-body">${tArr.map(([t,c])=>barRow(t,c,maxT,'navy')).join('')||'<div style="color:var(--ink3);font-size:13px">No data yet</div>'}</div>
+          <div class="d-card">
+            <div class="d-card-head"><div class="d-card-title"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h14M3 10h10M3 14h7"/></svg>By Type</div></div>
+            <div class="d-card-body">${tArr.map(([t,c])=>barRow(t,c,maxT,'gold')).join('')||'<div style="color:var(--ink3);font-size:13px">No data yet</div>'}</div>
           </div>
-          <div class="dash-card dash-full">
-            <div class="dash-card-head"><div class="dash-card-title">📅 By Month</div></div>
-            <div class="dash-card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">${mArr.map(([m,c])=>barRow(m,c,maxM,'gold')).join('')||'<div style="color:var(--ink3);font-size:13px">No data yet</div>'}</div>
+          <div class="d-card dash-full">
+            <div class="d-card-head"><div class="d-card-title"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="16" height="16" rx="1.5"/><path d="M6 2v16M14 2v16M2 7h16M2 13h16"/></svg>Monthly Distribution</div></div>
+            <div class="d-card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">${mArr.map(([m,c])=>barRow(m,c,maxM,'green')).join('')||'<div style="color:var(--ink3);font-size:13px">No data yet</div>'}</div>
           </div>
         </div>`;
     }
@@ -612,8 +963,7 @@ const firebaseConfig = {
     async function loadItems(){
       document.getElementById('items-table').innerHTML='<div class="loading"><div class="loading-spinner"></div><br>Loading…</div>';
       try { S.items=await getAll(); } catch(e){ return; }
-      updateBadges();
-      filterItems();
+      updateBadges(); filterItems();
     }
     function filteredItems(){
       let list=S.items;
@@ -648,45 +998,45 @@ const firebaseConfig = {
     }
     window.filterDept=filterDeptPage;
 
-    // Renderer
+    // Badges / rendering
     function avBadge(a){ return (a||'').toLowerCase().includes('not')?`<span class="badge badge-red">Not Available</span>`:`<span class="badge badge-green">Available</span>`; }
-    function tBadge(t){ return t==='CSE'?`<span class="badge badge-navy">CSE</span>`:t==='Machinery'?`<span class="badge badge-gold">Machinery</span>`:`<span class="badge badge-gray">${t||'-'}</span>`; }
+    function tBadge(t){ return t==='CSE'?`<span class="badge badge-blue">CSE</span>`:t==='Machinery'?`<span class="badge badge-gold">Machinery</span>`:`<span class="badge badge-gray">${t||'—'}</span>`; }
 
-    function renderTable(list, tableId, cardsId, showDept){
+    function renderTable(list,tableId,cardsId,showDept){
       const el=document.getElementById(tableId);
       if(!list.length){
-        el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No items found for this filter.</div><button class="btn btn-green btn-sm" onclick="openAddModal()">＋ Add First Item</button></div>`;
+        el.innerHTML=`<div class="empty"><div class="empty-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg></div><div class="empty-text">No items found.</div><button class="btn btn-gold btn-sm" onclick="openAddModal()">Add First Item</button></div>`;
         document.getElementById(cardsId).innerHTML=''; return;
       }
-      const deptCol=showDept?`<th class="hide-mobile">Dept</th>`:'';
+      const dCol=showDept?`<th class="hide-mobile">Dept</th>`:'';
       el.innerHTML=`<div class="table-wrap"><table><thead><tr>
-        <th>Item</th>${deptCol}<th class="hide-mobile">Type</th>
+        <th>Item</th>${dCol}<th class="hide-mobile">Type</th>
         <th class="hide-mobile">Month</th><th class="hide-mobile">Unit</th>
         <th>Unit Price</th><th>Qty</th><th>Total</th><th>Status</th>
       </tr></thead><tbody>
         ${list.map(i=>`<tr onclick="showItemModal('${i.id}')">
-          <td class="td-item">${i.item||'-'}</td>
-          ${showDept?`<td class="hide-mobile td-muted">${i.department||'-'}</td>`:''}
+          <td class="td-item">${i.item||'—'}</td>
+          ${showDept?`<td class="hide-mobile td-muted">${i.department||'—'}</td>`:''}
           <td class="hide-mobile">${tBadge(i.type)}</td>
-          <td class="hide-mobile td-muted">${i.month||'-'}</td>
-          <td class="hide-mobile td-muted">${i.unit_of_measure||'-'}</td>
+          <td class="hide-mobile td-muted">${i.month||'—'}</td>
+          <td class="hide-mobile td-muted">${i.unit_of_measure||'—'}</td>
           <td class="td-mono">₱${parseFloat(i.unit_price||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
-          <td class="td-muted">${i.quantity||'-'}</td>
+          <td class="td-muted">${i.quantity||'—'}</td>
           <td class="td-amount">₱${parseFloat(i.total_amount||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
           <td>${avBadge(i.availability)}</td>
         </tr>`).join('')}
       </tbody></table></div>`;
       document.getElementById(cardsId).innerHTML=list.map((i,idx)=>`
         <div class="m-card" style="animation-delay:${Math.min(idx,10)*.02}s" onclick="showItemModal('${i.id}')">
-          <div class="m-card-title">${i.item||'-'}</div>
+          <div class="m-card-title">${i.item||'—'}</div>
           <div class="m-card-row" style="margin-top:4px">
-            ${showDept&&i.department?`<span class="badge badge-navy">${i.department}</span>`:''}
+            ${showDept&&i.department?`<span class="badge badge-blue">${i.department}</span>`:''}
             ${tBadge(i.type)} <span class="td-muted">${i.month||''}</span>
             ${avBadge(i.availability)}
           </div>
           <div class="m-card-row" style="margin-top:6px">
-            <span class="td-muted">Qty: ${i.quantity||'-'} ${i.unit_of_measure||''}</span>
-            <span class="td-amount" style="font-size:14px">₱${parseFloat(i.total_amount||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</span>
+            <span class="td-muted">Qty: ${i.quantity||'—'} ${i.unit_of_measure||''}</span>
+            <span class="td-amount">₱${parseFloat(i.total_amount||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</span>
           </div>
         </div>`).join('');
     }
@@ -696,19 +1046,25 @@ const firebaseConfig = {
       const i=S.items.find(x=>x.id===id); if(!i) return;
       document.getElementById('item-modal-title').textContent=i.item||'Item';
       document.getElementById('item-modal-body').innerHTML=`
-        <div class="detail-section"><div class="detail-section-title">Item Details</div>
+        <div class="detail-section">
+          <div class="detail-section-title"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>Item Details</div>
           ${dr('Item Name',i.item)}${dr('Department',i.department)}${dr('Type',i.type)}
           ${dr('Unit of Measure',i.unit_of_measure)}${dr('Month',i.month)}
         </div>
-        <div class="detail-section"><div class="detail-section-title">Pricing & Status</div>
+        <div class="detail-section">
+          <div class="detail-section-title"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="16" height="10" rx="1.5"/><circle cx="10" cy="10" r="2.5"/></svg>Pricing & Status</div>
           ${dr('Unit Price','₱'+parseFloat(i.unit_price||0).toLocaleString('en-PH',{minimumFractionDigits:2}))}
           ${dr('Quantity',i.quantity)}
           ${dr('Total Amount','₱'+parseFloat(i.total_amount||0).toLocaleString('en-PH',{minimumFractionDigits:2}))}
           ${dr('Availability',i.availability)}
         </div>
-        <div class="form-actions" style="padding-top:12px;border-top:1px solid var(--border2);margin-top:4px">
-          <button class="btn btn-danger" onclick="confirmDelete('${id}')">🗑 Delete</button>
-          <button class="btn btn-outline" onclick="openEditModal('${id}')">✏️ Edit</button>
+        <div class="form-actions" style="padding-top:12px;border-top:1px solid var(--bdr2);margin-top:4px">
+          <button class="btn btn-danger" onclick="confirmDelete('${id}')">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12M8 6V4h4v2M5 6l1 11h8l1-11"/><path d="M8 10v4M12 10v4"/></svg>Delete
+          </button>
+          <button class="btn btn-outline" onclick="openEditModal('${id}')">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5a2.12 2.12 0 013 3L7 16H4v-3L13.5 3.5z"/></svg>Edit
+          </button>
         </div>`;
       openModal('modal-item');
     }
@@ -743,7 +1099,10 @@ const firebaseConfig = {
         ${fs('availability','Availability',['Available','Not Available'],i)}
         <div class="form-actions form-full">
           <button class="btn btn-outline" onclick="closeModal('modal-form')">Cancel</button>
-          <button class="btn btn-primary" onclick="saveItem()">💾 Save Item</button>
+          <button class="btn btn-primary" onclick="saveItem()">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17V7l3-4h9v14H4z"/><rect x="7" y="13" width="6" height="4"/><rect x="7" y="3" width="6" height="4"/></svg>
+            Save Item
+          </button>
         </div>
       </div>`;
     }
@@ -759,10 +1118,10 @@ const firebaseConfig = {
         if(S.editId){
           await updateRec(S.editId,data);
           const idx=S.items.findIndex(x=>x.id===S.editId); if(idx>=0) S.items[idx]={...S.items[idx],...data};
-          toast('Updated!','success');
+          toast('Updated successfully!','success');
         } else {
           const ref=await addRec(data); S.items.push({id:ref.id,...data});
-          toast('Added!','success');
+          toast('Added successfully!','success');
         }
         closeModal('modal-form'); updateBadges(); window.refreshCurrent();
       }catch(e){ toast('Error: '+e.message,'error'); }
@@ -771,7 +1130,7 @@ const firebaseConfig = {
 
     async function confirmDelete(id){
       if(!isOnline){ toast('Offline.','error'); return; }
-      if(!confirm('Delete this item?')) return;
+      if(!confirm('Delete this item? This cannot be undone.')) return;
       try{
         await deleteRec(id); S.items=S.items.filter(x=>x.id!==id);
         toast('Deleted!','success'); closeModal('modal-item'); updateBadges(); window.refreshCurrent();
@@ -779,424 +1138,67 @@ const firebaseConfig = {
     }
     window.confirmDelete=confirmDelete;
 
-    // ══ PRINT ══
+    // ═══ PRINT — DEPT ═══
     function printDept(){
-      const dept = S.dept;
-      if(!dept){ toast('No department selected','error'); return; }
-
-      const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-      const items = S.items.filter(i => i.department === dept);
-      if(!items.length){ toast('No items to print for this department','error'); return; }
-
-      const available    = items.filter(i => !(i.availability||'').toLowerCase().includes('not'));
-      const notAvailable = items.filter(i =>  (i.availability||'').toLowerCase().includes('not'));
-
-      const totalAmt = items.reduce((s,i)=>s+parseFloat(i.total_amount||0),0);
-      const availAmt = available.reduce((s,i)=>s+parseFloat(i.total_amount||0),0);
-      const notAvailAmt = notAvailable.reduce((s,i)=>s+parseFloat(i.total_amount||0),0);
-      const datePrinted = new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
-
-      // Build quantity-per-month cell for an item
-      function monthQty(item, month){
-        const m = (item.month||'').toLowerCase();
-        return m === month.toLowerCase() ? (parseFloat(item.quantity)||0) : '';
+      const dept=S.dept; if(!dept){ toast('No department selected','error'); return; }
+      const items=S.items.filter(i=>i.department===dept);
+      if(!items.length){ toast('No items to print','error'); return; }
+      const available   =items.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
+      const notAvailable=items.filter(i=> (i.availability||'').toLowerCase().includes('not'));
+      const grandTotal  =items.reduce((s,i)=>s+parseFloat(i.total_amount||0),0);
+      const datePrinted =new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+      const MTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const Q1=['January','February','March'],Q2=['April','May','June'],Q3=['July','August','September'],Q4=['October','November','December'];
+      function mQty(item,month){ return (item.month||'').toLowerCase()===month.toLowerCase()?(parseFloat(item.quantity)||0):''; }
+      function qSum(item,months){ return months.reduce((s,m)=>{ const v=mQty(item,m); return s+(v===''?0:v); },0); }
+      function qAmt(item,months){ const q=qSum(item,months); return q>0?(q*parseFloat(item.unit_price||0)):0; }
+      function itemRow(item,idx){
+        const up=parseFloat(item.unit_price||0),tQty=parseFloat(item.quantity)||0,tAmt=parseFloat(item.total_amount||0);
+        const q1=qSum(item,Q1),q1a=qAmt(item,Q1),q2=qSum(item,Q2),q2a=qAmt(item,Q2),q3=qSum(item,Q3),q3a=qAmt(item,Q3),q4=qSum(item,Q4),q4a=qAmt(item,Q4);
+        const fmt=n=>n>0?n:'',fmtA=n=>n>0?n.toLocaleString('en-PH',{minimumFractionDigits:2}):'';
+        return `<tr><td class="tc">${idx}</td><td class="tl">${item.item||''}</td><td class="tc">${item.unit_of_measure||''}</td>${MTHS.map(m=>`<td class="tc">${mQty(item,m)||''}</td>`).join('')}<td class="tc bold">${fmt(q1)}</td><td class="tr">${fmtA(q1a)}</td><td class="tc bold">${fmt(q2)}</td><td class="tr">${fmtA(q2a)}</td><td class="tc bold">${fmt(q3)}</td><td class="tr">${fmtA(q3a)}</td><td class="tc bold">${fmt(q4)}</td><td class="tr">${fmtA(q4a)}</td><td class="tc bold">${tQty}</td><td class="tr">${up.toLocaleString('en-PH',{minimumFractionDigits:2})}</td><td class="tr bold">${tAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</td></tr>`;
       }
-      // Q1=Jan-Mar, Q2=Apr-Jun, Q3=Jul-Sep, Q4=Oct-Dec
-      function qSum(item, months){
-        return months.reduce((s,m)=>{
-          const v = monthQty(item,m);
-          return s + (v===''?0:v);
-        },0);
-      }
-      function qAmt(item, months){
-        const q = qSum(item, months);
-        return q > 0 ? (q * parseFloat(item.unit_price||0)) : 0;
-      }
-      const Q1=['January','February','March'];
-      const Q2=['April','May','June'];
-      const Q3=['July','August','September'];
-      const Q4=['October','November','December'];
-
-      function itemRow(item, idx){
-        const up = parseFloat(item.unit_price||0);
-        const totalQty = parseFloat(item.quantity)||0;
-        const totalAmount = parseFloat(item.total_amount||0);
-        const q1=qSum(item,Q1), q1a=qAmt(item,Q1);
-        const q2=qSum(item,Q2), q2a=qAmt(item,Q2);
-        const q3=qSum(item,Q3), q3a=qAmt(item,Q3);
-        const q4=qSum(item,Q4), q4a=qAmt(item,Q4);
-        const fmt = n => n > 0 ? n : '';
-        const fmtAmt = n => n > 0 ? n.toLocaleString('en-PH',{minimumFractionDigits:2}) : '';
-        return `<tr>
-          <td class="tc">${idx}</td>
-          <td class="tl">${item.item||''}</td>
-          <td class="tc">${item.unit_of_measure||''}</td>
-          ${MONTHS.map(m=>`<td class="tc">${monthQty(item,m)||''}</td>`).join('')}
-          <td class="tc bold">${fmt(q1)}</td><td class="tr">${fmtAmt(q1a)}</td>
-          <td class="tc bold">${fmt(q2)}</td><td class="tr">${fmtAmt(q2a)}</td>
-          <td class="tc bold">${fmt(q3)}</td><td class="tr">${fmtAmt(q3a)}</td>
-          <td class="tc bold">${fmt(q4)}</td><td class="tr">${fmtAmt(q4a)}</td>
-          <td class="tc bold">${totalQty}</td>
-          <td class="tr">${up.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
-          <td class="tr bold">${totalAmount.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
-        </tr>`;
-      }
-
-      function sectionRows(list, label){
+      function sectionRows(list,label){
         if(!list.length) return '';
-        return `
-          <tr class="sec-head"><td colspan="23" class="tl">${label}</td></tr>
-          ${list.map((item,i)=>itemRow(item,i+1)).join('')}
-          <tr class="subtotal-row">
-            <td colspan="21" class="tr">Sub-Total (${label})</td>
-            <td></td>
-            <td class="tr bold">₱${list.reduce((s,i)=>s+parseFloat(i.total_amount||0),0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
-          </tr>`;
+        return `<tr class="sec-head"><td colspan="23" class="tl">${label}</td></tr>${list.map((item,i)=>itemRow(item,i+1)).join('')}<tr class="subtotal-row"><td colspan="21" class="tr">Sub-Total (${label})</td><td></td><td class="tr bold">₱${list.reduce((s,i)=>s+parseFloat(i.total_amount||0),0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td></tr>`;
       }
-
-      const html = `<!DOCTYPE html><html><head>
-<meta charset="UTF-8">
-<title>Annual Procurement Plan — ${dept}</title>
-<style>
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:Arial,sans-serif;font-size:8px;color:#000;background:#fff;}
-  .page{width:100%;padding:8mm 10mm 10mm;}
-  .title-block{text-align:center;margin-bottom:6px;}
-  .title-main{font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;}
-  .title-sub{font-size:10px;font-weight:700;margin-top:2px;}
-  .meta-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:4px;font-size:8px;}
-  .meta-left{line-height:1.7;}
-  .meta-right{text-align:right;line-height:1.7;}
-  table{width:100%;border-collapse:collapse;font-size:7px;}
-  th,td{border:1px solid #333;padding:2px 3px;vertical-align:middle;}
-  th{background:#1a3358;color:#fff;font-weight:700;text-align:center;font-size:6.5px;letter-spacing:.2px;}
-  th.sub{background:#2d4f7c;}
-  .tl{text-align:left;}
-  .tc{text-align:center;}
-  .tr{text-align:right;}
-  .bold{font-weight:700;}
-  .sec-head td{background:#e8edf5;font-weight:900;font-size:7.5px;text-transform:uppercase;letter-spacing:.4px;padding:3px 4px;}
-  .subtotal-row td{background:#f5f5f5;font-weight:700;border-top:2px solid #333;}
-  .grand-total td{background:#1a3358;color:#fff;font-weight:900;font-size:8px;}
-  .sig-block{display:flex;justify-content:space-between;margin-top:40px;gap:20px;}
-  .sig{flex:1;text-align:center;border-top:1px solid #333;padding-top:4px;}
-  .sig-name{font-weight:900;font-size:8px;text-transform:uppercase;}
-  .sig-title{font-size:7px;color:#444;margin-top:1px;}
-  .sig-office{font-size:7px;color:#666;}
-  @media print{
-    body{margin:0;}
-    .page{padding:6mm 8mm 8mm;width:100%;}
-    @page{size:legal landscape;margin:0;}
-  }
-</style>
-</head><body>
-<div class="page">
-  <div class="title-block">
-    <div class="title-main">Annual Procurement Plan for 2025</div>
-    <div class="title-sub">For Common-Use Supplies and Equipment (APP-CSE)</div>
-  </div>
-  <div class="meta-row">
-    <div class="meta-left">
-      <div><b>Province/City/Municipality:</b> Balayan, Batangas</div>
-      <div><b>Department/Office:</b> ${dept}</div>
-      <div><b>Plan Control No.:</b> _______________________</div>
-    </div>
-    <div class="meta-right">
-      <div><b>Planned Amount (Regular):</b> ₱${totalAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</div>
-      <div><b>Contingency:</b> ___________</div>
-      <div><b>Total:</b> ₱${totalAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</div>
-      <div><b>Date Submitted:</b> ${datePrinted}</div>
-      <div><b>Page:</b> 1 of 1</div>
-    </div>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th rowspan="2" style="width:22px">#</th>
-        <th rowspan="2" style="min-width:120px">Item &amp; Specifications</th>
-        <th rowspan="2" style="width:32px">Unit</th>
-        <th colspan="3">Q1 Qty</th>
-        <th colspan="3">Q2 Qty</th>
-        <th colspan="3">Q3 Qty</th>
-        <th colspan="3">Q4 Qty</th>
-        <th rowspan="2" style="width:22px">Q1</th><th rowspan="2" style="width:48px">Q1 Amt</th>
-        <th rowspan="2" style="width:22px">Q2</th><th rowspan="2" style="width:48px">Q2 Amt</th>
-        <th rowspan="2" style="width:22px">Q3</th><th rowspan="2" style="width:48px">Q3 Amt</th>
-        <th rowspan="2" style="width:22px">Q4</th><th rowspan="2" style="width:48px">Q4 Amt</th>
-        <th rowspan="2" style="width:30px">Total Qty</th>
-        <th rowspan="2" style="width:48px">Unit Price</th>
-        <th rowspan="2" style="width:56px">Total Amount</th>
-      </tr>
-      <tr>
-        <th class="sub">Jan</th><th class="sub">Feb</th><th class="sub">Mar</th>
-        <th class="sub">Apr</th><th class="sub">May</th><th class="sub">Jun</th>
-        <th class="sub">Jul</th><th class="sub">Aug</th><th class="sub">Sep</th>
-        <th class="sub">Oct</th><th class="sub">Nov</th><th class="sub">Dec</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${sectionRows(available,'AVAILABLE')}
-      ${sectionRows(notAvailable,'NOT AVAILABLE')}
-      <tr class="grand-total">
-        <td colspan="21" class="tr">GRAND TOTAL</td>
-        <td></td>
-        <td class="tr">₱${totalAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="sig-block">
-    <div class="sig">
-      <div class="sig-name">MARICORA M. MANINGAT</div>
-      <div class="sig-title">Acting Department Head</div>
-      <div class="sig-office">General Services Office</div>
-    </div>
-    <div class="sig">
-      <div class="sig-name">NORMANDO BAGAY</div>
-      <div class="sig-title">Acting Department Head</div>
-      <div class="sig-office">Budget Office</div>
-    </div>
-    <div class="sig">
-      <div class="sig-name">ELISA E. ABAD</div>
-      <div class="sig-title">Head, of Procuring Entity</div>
-      <div class="sig-office">&nbsp;</div>
-    </div>
-  </div>
-</div>
-<script>window.onload=function(){window.print();}<\/script>
-</body></html>`;
-
-      const win = window.open('','_blank','width=1200,height=800');
-      win.document.write(html);
-      win.document.close();
+      const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>APP-CSE 2025 — ${dept}</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Times New Roman',serif;font-size:9px;color:#000;background:#fff;}.page{padding:10mm;}.form-title{text-align:center;margin-bottom:6px;}.form-title-main{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.3px;}.form-title-sub{font-size:8px;color:#333;margin-top:2px;}.agency-block{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;margin-bottom:6px;font-size:8px;border:1px solid #999;padding:5px 8px;}.agency-row{display:flex;gap:4px;align-items:flex-end;border-bottom:1px solid #ccc;padding-bottom:2px;margin-bottom:2px;}.agency-label{color:#555;white-space:nowrap;}.agency-val{flex:1;font-weight:700;}table{width:100%;border-collapse:collapse;font-size:6.5px;}th,td{border:1px solid #444;padding:2px 2px;vertical-align:middle;}th{background:#1a3358;color:#fff;font-weight:700;text-align:center;font-size:6px;letter-spacing:.1px;}th.sub-h{background:#2d4f7c;font-size:5.5px;}th.grp{background:#0d2145;}.tl{text-align:left;}.tc{text-align:center;}.tr{text-align:right;}.bold{font-weight:700;}.sec-head td{background:#dce6f1;font-weight:900;font-size:7.5px;text-transform:uppercase;letter-spacing:.5px;padding:3px 6px;color:#1a3358;}.subtotal-row td{background:#f0f4f8;font-weight:700;border-top:1.5px solid #333;font-size:7px;}.grand-total td{background:#1a3358;color:#fff;font-weight:900;font-size:8px;}.sig-block{display:flex;justify-content:space-between;margin-top:40px;gap:20px;}.sig{flex:1;text-align:center;}.sig-line{border-top:1px solid #000;padding-top:4px;margin-top:28px;}.sig-name{font-weight:900;font-size:8px;text-transform:uppercase;}.sig-role{font-size:7px;color:#333;margin-top:2px;font-weight:700;}.sig-title{font-size:6.5px;color:#555;}@media print{body{margin:0;}@page{size:legal landscape;margin:7mm;}}</style></head><body><div class="page"><div class="form-title"><div class="form-title-main">Annual Procurement Plan — Common-Use Supplies and Equipment (APP-CSE) 2025</div><div class="form-title-sub">For items not available in the PS-DBM catalogue but regularly purchased from other sources</div></div><div class="agency-block"><div class="agency-row"><span class="agency-label">Department/Bureau/Office:</span><span class="agency-val">Municipality of Balayan</span></div><div class="agency-row"><span class="agency-label">Region:</span><span class="agency-val">CALABARZON (Region IV-A)</span></div><div class="agency-row"><span class="agency-label">Date Printed:</span><span class="agency-val">${datePrinted}</span></div></div><table><thead><tr><th rowspan="3">#</th><th rowspan="3" style="min-width:100px">Item &amp; Specification</th><th rowspan="3">Unit</th><th colspan="9" class="grp">Monthly Quantity Requirement</th><th colspan="8" class="grp">Quarterly Summary</th><th rowspan="3">Total Qty</th><th rowspan="3">Unit Price</th><th rowspan="3">Total Amount</th></tr><tr><th colspan="3" class="grp">Q1</th><th rowspan="2" class="sub-h">Q1</th><th rowspan="2" class="sub-h">Q1 AMT</th><th colspan="3" class="grp">Q2</th><th rowspan="2" class="sub-h">Q2</th><th rowspan="2" class="sub-h">Q2 AMT</th><th colspan="3" class="grp">Q3</th><th rowspan="2" class="sub-h">Q3</th><th rowspan="2" class="sub-h">Q3 AMT</th><th colspan="3" class="grp">Q4</th><th rowspan="2" class="sub-h">Q4</th><th rowspan="2" class="sub-h">Q4 AMT</th></tr><tr><th class="sub-h">Jan</th><th class="sub-h">Feb</th><th class="sub-h">Mar</th><th class="sub-h">Apr</th><th class="sub-h">May</th><th class="sub-h">Jun</th><th class="sub-h">Jul</th><th class="sub-h">Aug</th><th class="sub-h">Sep</th><th class="sub-h">Oct</th><th class="sub-h">Nov</th><th class="sub-h">Dec</th></tr></thead><tbody>${sectionRows(available,'DBM AVAILABLE')}${sectionRows(notAvailable,'DBM NOT AVAILABLE')}<tr class="grand-total"><td colspan="22" class="tr">GRAND TOTAL</td><td></td><td class="tr">₱${grandTotal.toLocaleString('en-PH',{minimumFractionDigits:2})}</td></tr></tbody></table><div class="sig-block"><div class="sig"><div class="sig-line"><div class="sig-name">_______________________________</div><div class="sig-role">Prepared by:</div><div class="sig-title">Property/Supply Officer</div></div></div><div class="sig"><div class="sig-line"><div class="sig-name">NORMANDO BAGAY</div><div class="sig-role">Certified Funds Available</div><div class="sig-title">Accountant / Budget Officer</div></div></div><div class="sig"><div class="sig-line"><div class="sig-name">ELISA E. ABAD</div><div class="sig-role">Approved by:</div><div class="sig-title">Head of Office/Agency</div></div></div></div></div><script>window.onload=function(){window.print();}<\/script></body></html>`;
+      const win=window.open('','_blank','width=1400,height=900');
+      win.document.write(html); win.document.close();
     }
-    window.printDept = printDept;
+    window.printDept=printDept;
 
-    // ══ PRINT ALL — matches ALL sheet format ══
+    // ═══ PRINT — ALL ═══
     function printAll(){
-      if(!S.items.length){ toast('No items to print','error'); return; }
-
-      const datePrinted = new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
-      const grandTotal  = S.items.reduce((s,i)=>s+parseFloat(i.total_amount||0),0);
-
-      const available    = S.items.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
-      const notAvailable = S.items.filter(i=> (i.availability||'').toLowerCase().includes('not'));
-
-      const Q1=['January','February','March'], Q2=['April','May','June'];
-      const Q3=['July','August','September'],  Q4=['October','November','December'];
-
-      function mQty(item, month){
-        return (item.month||'').toLowerCase()===month.toLowerCase() ? (parseFloat(item.quantity)||0) : 0;
+      const items=S.items; if(!items.length){ toast('No items to print','error'); return; }
+      const available   =items.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
+      const notAvailable=items.filter(i=> (i.availability||'').toLowerCase().includes('not'));
+      const grandTotal  =items.reduce((s,i)=>s+parseFloat(i.total_amount||0),0);
+      const datePrinted =new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+      const MTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const Q1=['January','February','March'],Q2=['April','May','June'],Q3=['July','August','September'],Q4=['October','November','December'];
+      function mQty(item,month){ return (item.month||'').toLowerCase()===month.toLowerCase()?(parseFloat(item.quantity)||0):''; }
+      function qSum(item,months){ return months.reduce((s,m)=>{ const v=mQty(item,m); return s+(v===''?0:v); },0); }
+      function qAmt(item,months){ const q=qSum(item,months); return q>0?(q*parseFloat(item.unit_price||0)):0; }
+      function itemRow(item,idx){
+        const up=parseFloat(item.unit_price||0),tQty=parseFloat(item.quantity)||0,tAmt=parseFloat(item.total_amount||0);
+        const q1=qSum(item,Q1),q1a=qAmt(item,Q1),q2=qSum(item,Q2),q2a=qAmt(item,Q2),q3=qSum(item,Q3),q3a=qAmt(item,Q3),q4=qSum(item,Q4),q4a=qAmt(item,Q4);
+        const fmt=n=>n>0?n:'',fmtA=n=>n>0?n.toLocaleString('en-PH',{minimumFractionDigits:2}):'';
+        return `<tr><td class="tc">${idx}</td><td class="tl">${item.item||''}</td><td class="tc">${item.unit_of_measure||''}</td>${MTHS.map(m=>`<td class="tc">${mQty(item,m)||''}</td>`).join('')}<td class="tc bold">${fmt(q1)}</td><td class="tr">${fmtA(q1a)}</td><td class="tc bold">${fmt(q2)}</td><td class="tr">${fmtA(q2a)}</td><td class="tc bold">${fmt(q3)}</td><td class="tr">${fmtA(q3a)}</td><td class="tc bold">${fmt(q4)}</td><td class="tr">${fmtA(q4a)}</td><td class="tc bold">${tQty}</td><td class="tr">${up.toLocaleString('en-PH',{minimumFractionDigits:2})}</td><td class="tr bold">${tAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</td></tr>`;
       }
-      function qSum(item, months){ return months.reduce((s,m)=>s+mQty(item,m),0); }
-      function qAmt(item, months){ const q=qSum(item,months); return q>0?(q*parseFloat(item.unit_price||0)):0; }
-      function fc(n){ return n>0?n:''; }
-      function fa(n){ return n>0?n.toLocaleString('en-PH',{minimumFractionDigits:2}):''; }
-
-      function itemRow(item, idx){
-        const up  = parseFloat(item.unit_price||0);
-        const qty = parseFloat(item.quantity)||0;
-        const tot = parseFloat(item.total_amount||0);
-        const q1=qSum(item,Q1), q1a=qAmt(item,Q1);
-        const q2=qSum(item,Q2), q2a=qAmt(item,Q2);
-        const q3=qSum(item,Q3), q3a=qAmt(item,Q3);
-        const q4=qSum(item,Q4), q4a=qAmt(item,Q4);
-        return `<tr>
-          <td class="tc">${idx}</td>
-          <td class="tl item-cell">${item.item||''}</td>
-          <td class="tr price-cell">${up.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
-          <td class="tc">${item.unit_of_measure||''}</td>
-          <td class="tc">${fc(mQty(item,'January'))}</td>
-          <td class="tc">${fc(mQty(item,'February'))}</td>
-          <td class="tc">${fc(mQty(item,'March'))}</td>
-          <td class="tc bold">${fc(q1)}</td>
-          <td class="tr">${fa(q1a)}</td>
-          <td class="tc">${fc(mQty(item,'April'))}</td>
-          <td class="tc">${fc(mQty(item,'May'))}</td>
-          <td class="tc">${fc(mQty(item,'June'))}</td>
-          <td class="tc bold">${fc(q2)}</td>
-          <td class="tr">${fa(q2a)}</td>
-          <td class="tc">${fc(mQty(item,'July'))}</td>
-          <td class="tc">${fc(mQty(item,'August'))}</td>
-          <td class="tc">${fc(mQty(item,'September'))}</td>
-          <td class="tc bold">${fc(q3)}</td>
-          <td class="tr">${fa(q3a)}</td>
-          <td class="tc">${fc(mQty(item,'October'))}</td>
-          <td class="tc">${fc(mQty(item,'November'))}</td>
-          <td class="tc">${fc(mQty(item,'December'))}</td>
-          <td class="tc bold">${fc(q4)}</td>
-          <td class="tr">${fa(q4a)}</td>
-          <td class="tc bold">${qty}</td>
-          <td class="tr bold">${tot.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
-        </tr>`;
-      }
-
-      function sectionRows(list, label){
+      function sectionRows(list,label){
         if(!list.length) return '';
-        const sub = list.reduce((s,i)=>s+parseFloat(i.total_amount||0),0);
-        return `
-          <tr class="sec-head"><td colspan="26" class="tl">${label}</td></tr>
-          ${list.map((i,idx)=>itemRow(i,idx+1)).join('')}
-          <tr class="subtotal-row">
-            <td colspan="24" class="tr italic">Sub-Total (${label})</td>
-            <td></td>
-            <td class="tr bold">₱${sub.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
-          </tr>`;
+        return `<tr class="sec-head"><td colspan="23" class="tl">${label}</td></tr>${list.map((item,i)=>itemRow(item,i+1)).join('')}<tr class="subtotal-row"><td colspan="21" class="tr">Sub-Total (${label})</td><td></td><td class="tr bold">₱${list.reduce((s,i)=>s+parseFloat(i.total_amount||0),0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td></tr>`;
       }
-
-      const html = `<!DOCTYPE html><html><head>
-<meta charset="UTF-8">
-<title>Annual Procurement Plan — All Departments</title>
-<style>
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:Arial,sans-serif;font-size:7px;color:#000;background:#fff;}
-  .page{padding:6mm 8mm 10mm;}
-
-  /* ── HEADER BLOCK ── */
-  .form-title{text-align:center;margin-bottom:6px;}
-  .form-title-main{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;}
-  .form-title-sub{font-size:9px;font-weight:700;margin-top:2px;}
-  .agency-block{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;margin-bottom:6px;font-size:8px;border:1px solid #999;padding:5px 8px;}
-  .agency-row{display:flex;gap:4px;align-items:flex-end;border-bottom:1px solid #ccc;padding-bottom:2px;margin-bottom:2px;}
-  .agency-label{color:#555;white-space:nowrap;}
-  .agency-val{flex:1;font-weight:700;}
-
-  /* ── TABLE ── */
-  table{width:100%;border-collapse:collapse;font-size:6.5px;}
-  th,td{border:1px solid #444;padding:2px 2px;vertical-align:middle;}
-  th{background:#1a3358;color:#fff;font-weight:700;text-align:center;font-size:6px;letter-spacing:.1px;}
-  th.sub-h{background:#2d4f7c;font-size:5.5px;}
-  th.grp{background:#0d2145;}
-  .tl{text-align:left;}.tc{text-align:center;}.tr{text-align:right;}
-  .bold{font-weight:700;}.italic{font-style:italic;}
-  .item-cell{max-width:130px;word-break:break-word;white-space:normal;}
-  .price-cell{white-space:nowrap;font-size:6px;color:#333;}
-  .sec-head td{background:#dce6f1;font-weight:900;font-size:7.5px;text-transform:uppercase;letter-spacing:.5px;padding:3px 6px;color:#1a3358;}
-  .subtotal-row td{background:#f0f4f8;font-weight:700;border-top:1.5px solid #333;font-size:7px;}
-  .grand-total td{background:#1a3358;color:#fff;font-weight:900;font-size:8px;}
-
-  /* ── SIGNATURES ── */
-  .sig-block{display:flex;justify-content:space-between;margin-top:40px;gap:20px;}
-  .sig{flex:1;text-align:center;}
-  .sig-line{border-top:1px solid #000;padding-top:4px;margin-top:28px;}
-  .sig-name{font-weight:900;font-size:8px;text-transform:uppercase;}
-  .sig-role{font-size:7px;color:#333;margin-top:2px;font-weight:700;}
-  .sig-title{font-size:6.5px;color:#555;}
-  .date-line{font-size:7px;margin-top:8px;color:#333;}
-
-  @media print{
-    body{margin:0;}
-    @page{size:legal landscape;margin:7mm;}
-  }
-</style>
-</head><body>
-<div class="page">
-
-  <!-- TITLE -->
-  <div class="form-title">
-    <div class="form-title-main">Annual Procurement Plan — Common-Use Supplies and Equipment (APP-CSE) 2025</div>
-    <div class="form-title-sub">For items not available in the PS-DBM catalogue but regularly purchased from other sources</div>
-  </div>
-
-  <!-- AGENCY INFO -->
-  <div class="agency-block">
-    <div class="agency-row"><span class="agency-label">Department/Bureau/Office:</span><span class="agency-val">Municipality of Balayan</span></div>
-    <div class="agency-row"><span class="agency-label">Agency Code/UACS:</span><span class="agency-val">______________</span></div>
-    <div class="agency-row"><span class="agency-label">Contact Person:</span><span class="agency-val">______________</span></div>
-    <div class="agency-row"><span class="agency-label">Region:</span><span class="agency-val">CALABARZON (Region IV-A)</span></div>
-    <div class="agency-row"><span class="agency-label">Organization Type:</span><span class="agency-val">Local Government Unit</span></div>
-    <div class="agency-row"><span class="agency-label">Position:</span><span class="agency-val">______________</span></div>
-    <div class="agency-row"><span class="agency-label">Address:</span><span class="agency-val">Balayan, Batangas</span></div>
-    <div class="agency-row"><span class="agency-label">Date Printed:</span><span class="agency-val">${datePrinted}</span></div>
-    <div class="agency-row"><span class="agency-label">E-mail:</span><span class="agency-val">______________</span></div>
-  </div>
-
-  <!-- MAIN TABLE -->
-  <table>
-    <thead>
-      <tr>
-        <th rowspan="3" style="width:16px">#</th>
-        <th rowspan="3" style="min-width:100px">Item &amp; Specification</th>
-        <th rowspan="3" style="width:38px">Price<br>Catalogue</th>
-        <th rowspan="3" style="width:26px">Unit of<br>Measure</th>
-        <th colspan="9" class="grp">Monthly Quantity Requirement</th>
-        <th colspan="9" class="grp">&nbsp;</th>
-        <th rowspan="3" style="width:26px">Total Qty<br>for Year</th>
-        <th rowspan="3" style="width:52px">Total Amount<br>for Year</th>
-      </tr>
-      <tr>
-        <th colspan="3" class="grp">Q1</th>
-        <th rowspan="2" class="sub-h" style="width:16px">Q1</th>
-        <th rowspan="2" class="sub-h" style="width:40px">Q1 AMT</th>
-        <th colspan="3" class="grp">Q2</th>
-        <th rowspan="2" class="sub-h" style="width:16px">Q2</th>
-        <th rowspan="2" class="sub-h" style="width:40px">Q2 AMT</th>
-        <th colspan="3" class="grp">Q3</th>
-        <th rowspan="2" class="sub-h" style="width:16px">Q3</th>
-        <th rowspan="2" class="sub-h" style="width:40px">Q3 AMT</th>
-        <th colspan="3" class="grp">Q4</th>
-        <th rowspan="2" class="sub-h" style="width:16px">Q4</th>
-        <th rowspan="2" class="sub-h" style="width:40px">Q4 AMT</th>
-      </tr>
-      <tr>
-        <th class="sub-h">Jan</th><th class="sub-h">Feb</th><th class="sub-h">Mar</th>
-        <th class="sub-h">Apr</th><th class="sub-h">May</th><th class="sub-h">Jun</th>
-        <th class="sub-h">Jul</th><th class="sub-h">Aug</th><th class="sub-h">Sep</th>
-        <th class="sub-h">Oct</th><th class="sub-h">Nov</th><th class="sub-h">Dec</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${sectionRows(available,'DBM AVAILABLE')}
-      ${sectionRows(notAvailable,'DBM NOT AVAILABLE')}
-      <tr class="grand-total">
-        <td colspan="24" class="tr">GRAND TOTAL</td>
-        <td></td>
-        <td class="tr">₱${grandTotal.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- SIGNATURES -->
-  <div class="sig-block">
-    <div class="sig">
-      <div class="sig-line">
-        <div class="sig-name">_______________________________</div>
-        <div class="sig-role">Prepared by:</div>
-        <div class="sig-title">Property/Supply Officer</div>
-        <div class="date-line">Date Prepared: ____________________</div>
-      </div>
-    </div>
-    <div class="sig">
-      <div class="sig-line">
-        <div class="sig-name">NORMANDO BAGAY</div>
-        <div class="sig-role">Certified Funds Available /</div>
-        <div class="sig-role">Certified Appropriate Funds Available:</div>
-        <div class="sig-title">Accountant / Budget Officer</div>
-      </div>
-    </div>
-    <div class="sig">
-      <div class="sig-line">
-        <div class="sig-name">ELISA E. ABAD</div>
-        <div class="sig-role">Approved by:</div>
-        <div class="sig-title">Head of Office/Agency</div>
-      </div>
-    </div>
-  </div>
-
-</div>
-<script>window.onload=function(){window.print();}<\/script>
-</body></html>`;
-
-      const win = window.open('','_blank','width=1400,height=900');
-      win.document.write(html);
-      win.document.close();
+      const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>APP-CSE 2025 — All Departments</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Times New Roman',serif;font-size:9px;color:#000;background:#fff;}.page{padding:10mm;}.form-title{text-align:center;margin-bottom:6px;}.form-title-main{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.3px;}.form-title-sub{font-size:8px;color:#333;margin-top:2px;}.agency-block{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;margin-bottom:6px;font-size:8px;border:1px solid #999;padding:5px 8px;}.agency-row{display:flex;gap:4px;align-items:flex-end;border-bottom:1px solid #ccc;padding-bottom:2px;margin-bottom:2px;}.agency-label{color:#555;white-space:nowrap;}.agency-val{flex:1;font-weight:700;}table{width:100%;border-collapse:collapse;font-size:6.5px;}th,td{border:1px solid #444;padding:2px 2px;vertical-align:middle;}th{background:#1a3358;color:#fff;font-weight:700;text-align:center;font-size:6px;letter-spacing:.1px;}th.sub-h{background:#2d4f7c;font-size:5.5px;}th.grp{background:#0d2145;}.tl{text-align:left;}.tc{text-align:center;}.tr{text-align:right;}.bold{font-weight:700;}.sec-head td{background:#dce6f1;font-weight:900;font-size:7.5px;text-transform:uppercase;letter-spacing:.5px;padding:3px 6px;color:#1a3358;}.subtotal-row td{background:#f0f4f8;font-weight:700;border-top:1.5px solid #333;font-size:7px;}.grand-total td{background:#1a3358;color:#fff;font-weight:900;font-size:8px;}.sig-block{display:flex;justify-content:space-between;margin-top:40px;gap:20px;}.sig{flex:1;text-align:center;}.sig-line{border-top:1px solid #000;padding-top:4px;margin-top:28px;}.sig-name{font-weight:900;font-size:8px;text-transform:uppercase;}.sig-role{font-size:7px;color:#333;margin-top:2px;font-weight:700;}.sig-title{font-size:6.5px;color:#555;}@media print{body{margin:0;}@page{size:legal landscape;margin:7mm;}}</style></head><body><div class="page"><div class="form-title"><div class="form-title-main">Annual Procurement Plan — Common-Use Supplies and Equipment (APP-CSE) 2025</div><div class="form-title-sub">For items not available in the PS-DBM catalogue but regularly purchased from other sources</div></div><div class="agency-block"><div class="agency-row"><span class="agency-label">Department/Bureau/Office:</span><span class="agency-val">Municipality of Balayan</span></div><div class="agency-row"><span class="agency-label">Region:</span><span class="agency-val">CALABARZON (Region IV-A)</span></div><div class="agency-row"><span class="agency-label">Date Printed:</span><span class="agency-val">${datePrinted}</span></div></div><table><thead><tr><th rowspan="3">#</th><th rowspan="3" style="min-width:100px">Item &amp; Specification</th><th rowspan="3">Unit</th><th colspan="9" class="grp">Monthly Quantity Requirement</th><th colspan="8" class="grp">Quarterly Summary</th><th rowspan="3">Total Qty</th><th rowspan="3">Unit Price</th><th rowspan="3">Total Amount</th></tr><tr><th colspan="3" class="grp">Q1</th><th rowspan="2" class="sub-h">Q1</th><th rowspan="2" class="sub-h">Q1 AMT</th><th colspan="3" class="grp">Q2</th><th rowspan="2" class="sub-h">Q2</th><th rowspan="2" class="sub-h">Q2 AMT</th><th colspan="3" class="grp">Q3</th><th rowspan="2" class="sub-h">Q3</th><th rowspan="2" class="sub-h">Q3 AMT</th><th colspan="3" class="grp">Q4</th><th rowspan="2" class="sub-h">Q4</th><th rowspan="2" class="sub-h">Q4 AMT</th></tr><tr><th class="sub-h">Jan</th><th class="sub-h">Feb</th><th class="sub-h">Mar</th><th class="sub-h">Apr</th><th class="sub-h">May</th><th class="sub-h">Jun</th><th class="sub-h">Jul</th><th class="sub-h">Aug</th><th class="sub-h">Sep</th><th class="sub-h">Oct</th><th class="sub-h">Nov</th><th class="sub-h">Dec</th></tr></thead><tbody>${sectionRows(available,'DBM AVAILABLE')}${sectionRows(notAvailable,'DBM NOT AVAILABLE')}<tr class="grand-total"><td colspan="22" class="tr">GRAND TOTAL</td><td></td><td class="tr">₱${grandTotal.toLocaleString('en-PH',{minimumFractionDigits:2})}</td></tr></tbody></table><div class="sig-block"><div class="sig"><div class="sig-line"><div class="sig-name">_______________________________</div><div class="sig-role">Prepared by:</div><div class="sig-title">Property/Supply Officer</div></div></div><div class="sig"><div class="sig-line"><div class="sig-name">NORMANDO BAGAY</div><div class="sig-role">Certified Funds Available</div><div class="sig-title">Accountant / Budget Officer</div></div></div><div class="sig"><div class="sig-line"><div class="sig-name">ELISA E. ABAD</div><div class="sig-role">Approved by:</div><div class="sig-title">Head of Office/Agency</div></div></div></div></div><script>window.onload=function(){window.print();}<\/script></body></html>`;
+      const win=window.open('','_blank','width=1400,height=900');
+      win.document.write(html); win.document.close();
     }
-    window.printAll = printAll;
+    window.printAll=printAll;
 
     loadDashboard();
-  } catch(e) {
-    document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#f7f5ef;font-family:sans-serif;text-align:center;padding:20px"><div><div style="font-size:48px;margin-bottom:16px">&#9888;&#65039;</div><div style="font-size:18px;margin-bottom:8px;color:#0d1f3c">Firebase Connection Failed</div><div style="font-size:13px;color:#888">'+e.message+'</div></div></div>';
+  } catch(e){
+    document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#F4F6FA;font-family:sans-serif;text-align:center;padding:20px"><div><svg style="width:52px;height:52px;color:#C0271A;margin:0 auto 16px;display:block" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2l8 16H2L10 2z"/><path d="M10 8v4M10 14v.5"/></svg><div style="font-size:18px;margin-bottom:8px;color:#0F1929;font-weight:700">Firebase Connection Failed</div><div style="font-size:13px;color:#6B7280">'+e.message+'</div></div></div>';
   }
 })();
 </script>
@@ -1208,7 +1210,13 @@ window.openModal=openModal;window.closeModal=closeModal;window.closeOverlay=clos
 function dr(label,val){if(!val||String(val).trim()==='')return '';return `<div class="detail-row"><span class="detail-label">${label}</span><span class="detail-value">${val}</span></div>`;}
 function ea(s){return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 let toastTimer;
-function toast(msg,type='success'){const el=document.getElementById('toast');el.textContent=msg;el.className=`toast show ${type}`;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3000);}
+function toast(msg,type='success'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.className=`toast show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
+}
 </script>
 </body>
 </html>
