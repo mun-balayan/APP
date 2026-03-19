@@ -707,6 +707,11 @@ tbody td:last-child{border-right:none;}
         <option>May</option><option>June</option><option>July</option><option>August</option>
         <option>September</option><option>October</option><option>November</option><option>December</option>
       </select>
+      <select class="filter-sel" id="items-avail" onchange="filterItems()">
+        <option value="">All Availability</option>
+        <option value="available">✓ Available</option>
+        <option value="not">✗ Not Available</option>
+      </select>
     </div>
     <div id="items-table"></div>
     <div class="mobile-cards" id="items-cards"></div>
@@ -743,6 +748,11 @@ tbody td:last-child{border-right:none;}
         <option>January</option><option>February</option><option>March</option><option>April</option>
         <option>May</option><option>June</option><option>July</option><option>August</option>
         <option>September</option><option>October</option><option>November</option><option>December</option>
+      </select>
+      <select class="filter-sel" id="dept-avail-filter" onchange="filterDept()">
+        <option value="">All Availability</option>
+        <option value="available">✓ Available</option>
+        <option value="not">✗ Not Available</option>
       </select>
     </div>
     <div id="dept-table"></div>
@@ -825,8 +835,8 @@ const firebaseConfig = {
     window.addEventListener('offline', ()=>{ setOnlineState(false); });
 
     const S = { page:'dashboard', dept:null, items:[], editId:null,
-      itemSearch:'', itemDept:'', itemType:'', itemMonth:'',
-      deptSearch:'', deptType:'', deptMonth:'' };
+      itemSearch:'', itemDept:'', itemType:'', itemMonth:'', itemAvail:'',
+      deptSearch:'', deptType:'', deptMonth:'', deptAvail:'' };
     const DEPTS  = ['GSO','ICT','MPDC','PESO','MHO','HRMO'];
     const TYPES  = ['CSE','Other Supplies','Machinery'];
     const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -972,6 +982,8 @@ const firebaseConfig = {
       if(S.itemDept)  list=list.filter(i=>i.department===S.itemDept);
       if(S.itemType)  list=list.filter(i=>i.type===S.itemType);
       if(S.itemMonth) list=list.filter(i=>i.month===S.itemMonth);
+      if(S.itemAvail==='not')       list=list.filter(i=>(i.availability||'').toLowerCase().includes('not'));
+      else if(S.itemAvail==='available') list=list.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
       return list;
     }
     function filterItems(){
@@ -979,6 +991,7 @@ const firebaseConfig = {
       S.itemDept=document.getElementById('items-dept').value;
       S.itemType=document.getElementById('items-type').value;
       S.itemMonth=document.getElementById('items-month').value;
+      S.itemAvail=document.getElementById('items-avail').value;
       const list=filteredItems();
       document.getElementById('items-count').textContent=`${list.length} record${list.length!==1?'s':''}`;
       renderTable(list,'items-table','items-cards',true);
@@ -990,10 +1003,13 @@ const firebaseConfig = {
       S.deptSearch=(document.getElementById('dept-search').value||'').toLowerCase();
       S.deptType=document.getElementById('dept-type-filter').value;
       S.deptMonth=document.getElementById('dept-month-filter').value;
+      S.deptAvail=document.getElementById('dept-avail-filter').value;
       let list=S.items.filter(i=>i.department===S.dept);
       if(S.deptSearch) list=list.filter(i=>[i.item,i.type,i.month].join(' ').toLowerCase().includes(S.deptSearch));
       if(S.deptType)   list=list.filter(i=>i.type===S.deptType);
       if(S.deptMonth)  list=list.filter(i=>i.month===S.deptMonth);
+      if(S.deptAvail==='not')            list=list.filter(i=>(i.availability||'').toLowerCase().includes('not'));
+      else if(S.deptAvail==='available') list=list.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
       renderTable(list,'dept-table','dept-cards',false);
     }
     window.filterDept=filterDeptPage;
