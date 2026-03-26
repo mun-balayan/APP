@@ -470,6 +470,19 @@ tbody td:last-child{border-right:none;}
 
 /* ═══ FORM ═══ */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
+.form-month-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--bdr2);border-radius:var(--r);overflow:hidden;margin-bottom:4px;}
+.fmg-quarter{border-right:2px solid var(--blue-edge);}
+.fmg-quarter:last-child{border-right:none;}
+.fmg-q-label{background:var(--blue);color:#fff;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;text-align:center;padding:5px 4px;}
+.fmg-month{display:flex;flex-direction:column;border-top:1px solid var(--bdr2);}
+.fmg-month label{font-size:9px;font-weight:600;color:var(--ink3);padding:4px 8px 0;letter-spacing:.3px;}
+.fmg-month input{border:none;border-top:1px solid var(--bdr);background:var(--white);padding:5px 8px;font-size:13px;font-family:inherit;outline:none;width:100%;color:var(--ink);text-align:center;}
+.fmg-month input:focus{background:var(--blue-light);color:var(--blue);}
+.fmg-month input::placeholder{color:var(--bdr2);}
+.fmg-totals{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 0 0;}
+.fmg-total-box{background:var(--forest-light,#f0f7f0);border:1px solid var(--forest-edge,#c8dfc8);border-radius:var(--r);padding:8px 12px;text-align:center;}
+.fmg-total-box .tb-label{font-size:9px;color:var(--ink3);font-weight:600;letter-spacing:.3px;text-transform:uppercase;}
+.fmg-total-box .tb-val{font-size:18px;font-weight:800;color:var(--forest,#1a5c1a);font-family:monospace;margin-top:2px;}
 .form-full{grid-column:1/-1;}
 .form-group{display:flex;flex-direction:column;gap:5px;}
 .form-label{font-size:10px;color:var(--ink3);font-weight:600;letter-spacing:.6px;text-transform:uppercase;}
@@ -1219,7 +1232,7 @@ const firebaseConfig = {
       if(q) list=list.filter(i=>[i.item,i.department,i.type,i.month,i.unit_of_measure].join(' ').toLowerCase().includes(q));
       if(S.itemDept)  list=list.filter(i=>i.department===S.itemDept);
       if(S.itemType)  list=list.filter(i=>normalizeType(i.type)===S.itemType);
-      if(S.itemMonth) list=list.filter(i=>i.month===S.itemMonth);
+      if(S.itemMonth){ const mk={January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'}; list=list.filter(i=>parseFloat(i[mk[S.itemMonth]]||0)>0); }
       if(S.itemAvail==='not')       list=list.filter(i=>(i.availability||'').toLowerCase().includes('not'));
       else if(S.itemAvail==='available') list=list.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
       return list;
@@ -1245,7 +1258,7 @@ const firebaseConfig = {
       let list=S.items.filter(i=>i.department===S.dept);
       if(S.deptSearch) list=list.filter(i=>[i.item,i.type,i.month].join(' ').toLowerCase().includes(S.deptSearch));
       if(S.deptType)   list=list.filter(i=>normalizeType(i.type)===S.deptType);
-      if(S.deptMonth)  list=list.filter(i=>i.month===S.deptMonth);
+      if(S.deptMonth){ const mk={January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'}; list=list.filter(i=>parseFloat(i[mk[S.deptMonth]]||0)>0); }
       if(S.deptAvail==='not')            list=list.filter(i=>(i.availability||'').toLowerCase().includes('not'));
       else if(S.deptAvail==='available') list=list.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
 
@@ -1365,6 +1378,7 @@ const firebaseConfig = {
       document.getElementById('form-title').textContent='Add Procurement Item';
       document.getElementById('form-body').innerHTML=itemForm();
       openModal('modal-form');
+      setTimeout(updateFormTotals,0);
     }
     window.openAddModal=openAddModal;
     function openEditModal(id){
@@ -1373,22 +1387,56 @@ const firebaseConfig = {
       document.getElementById('form-title').textContent='Edit Procurement Item';
       document.getElementById('form-body').innerHTML=itemForm({...i, type: normalizeType(i.type)});
       openModal('modal-form');
+      setTimeout(updateFormTotals,0);
     }
     window.openEditModal=openEditModal;
 
     function fi(name,label,v={},type='text'){ return `<div class="form-group"><label class="form-label">${label}</label><input class="form-input" type="${type}" name="${name}" value="${ea(v[name]||'')}"></div>`; }
     function fs(name,label,opts,v={}){ return `<div class="form-group"><label class="form-label">${label}</label><select class="form-select" name="${name}"><option value="">—</option>${opts.map(o=>`<option ${(v[name]||'')==o?'selected':''}>${o}</option>`).join('')}</select></div>`; }
 
+    // Month key map: Month name → field name
+    const MONTH_KEYS = {January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'};
+    const QUARTERS = [
+      {label:'Q1 — Jan · Feb · Mar', months:['January','February','March']},
+      {label:'Q2 — Apr · May · Jun', months:['April','May','June']},
+      {label:'Q3 — Jul · Aug · Sep', months:['July','August','September']},
+      {label:'Q4 — Oct · Nov · Dec', months:['October','November','December']},
+    ];
+
+    function calcMonthlyTotals(i){
+      const totalQty = Object.values(MONTH_KEYS).reduce((s,k)=>s+(parseFloat(i[k])||0),0);
+      const up = parseFloat(i.unit_price||0);
+      return { totalQty, totalAmt: totalQty * up };
+    }
+
     function itemForm(i={}){
-      // Use pre-selected dept if on a dept page
       const defaultDept = i.department || (S.dept && DEPTS.includes(S.dept) ? S.dept : '');
       const iWithDept = {...i, department: defaultDept};
+      const quarterCols = QUARTERS.map(q=>{
+        const monthInputs = q.months.map(m=>{
+          const key = MONTH_KEYS[m];
+          const val = i[key]||'';
+          return `<div class="fmg-month">
+            <label>${m.slice(0,3)}</label>
+            <input type="number" name="${key}" value="${ea(String(val))}" min="0" placeholder="0" oninput="updateFormTotals()">
+          </div>`;
+        }).join('');
+        return `<div class="fmg-quarter"><div class="fmg-q-label">${q.label}</div>${monthInputs}</div>`;
+      }).join('');
+
       return `<div class="form-grid" id="ifrm">
         <div class="form-group form-full"><label class="form-label">Item Name</label><input class="form-input" type="text" name="item" value="${ea(i.item||'')}"></div>
         ${fs('department','Department',DEPTS,iWithDept)}${fs('type','Supply Category',TYPES,i)}
-        ${fs('month','Month',MONTHS,i)}${fi('unit_of_measure','Unit of Measure',i)}
-        ${fi('unit_price','Unit Price (₱)',i,'number')}${fi('quantity','Quantity',i,'number')}
+        ${fi('unit_of_measure','Unit of Measure',i)}<div class="form-group"><label class="form-label">Unit Price (₱)</label><input class="form-input" type="number" name="unit_price" value="${ea(String(i.unit_price||''))}" min="0" step="0.01" oninput="updateFormTotals()"></div>
         ${fs('availability','Availability',['Available','Not Available'],i)}
+        <div class="form-group form-full">
+          <label class="form-label" style="margin-bottom:8px">Monthly Quantity per Month</label>
+          <div class="form-month-grid">${quarterCols}</div>
+          <div class="fmg-totals">
+            <div class="fmg-total-box"><div class="tb-label">Total Quantity</div><div class="tb-val" id="fmg-total-qty">0</div></div>
+            <div class="fmg-total-box"><div class="tb-label">Total Amount</div><div class="tb-val" id="fmg-total-amt">₱0.00</div></div>
+          </div>
+        </div>
         <div class="form-actions form-full">
           <button class="btn btn-outline" onclick="closeModal('modal-form')">Cancel</button>
           <button class="btn btn-primary" onclick="saveItem()">
@@ -1399,14 +1447,32 @@ const firebaseConfig = {
       </div>`;
     }
 
+    function updateFormTotals(){
+      const data = {};
+      document.querySelectorAll('#ifrm [name]').forEach(el=>data[el.name]=el.value);
+      const up = parseFloat(data.unit_price||0);
+      const totalQty = Object.values(MONTH_KEYS).reduce((s,k)=>s+(parseFloat(data[k])||0),0);
+      const totalAmt = totalQty * up;
+      const qEl = document.getElementById('fmg-total-qty');
+      const aEl = document.getElementById('fmg-total-amt');
+      if(qEl) qEl.textContent = totalQty || 0;
+      if(aEl) aEl.textContent = '₱'+totalAmt.toLocaleString('en-PH',{minimumFractionDigits:2});
+    }
+    window.updateFormTotals = updateFormTotals;
+
     async function saveItem(){
       if(!isOnline){ toast('Offline. Cannot save.','error'); return; }
       const data={};
       document.querySelectorAll('#ifrm [name]').forEach(el=>data[el.name]=el.value);
-      const up=parseFloat(data.unit_price||0), qty=parseFloat(data.quantity||0);
-      data.total_amount=(up*qty).toFixed(2);
-      data.type = normalizeType(data.type); // ensure stored as Office Supplies, not CSE
-      Object.keys(data).forEach(k=>{ if(data[k]==='') data[k]=null; });
+      // Compute total quantity from all monthly qty fields
+      const up=parseFloat(data.unit_price||0);
+      const totalQty = Object.values(MONTH_KEYS).reduce((s,k)=>s+(parseFloat(data[k])||0),0);
+      data.quantity = totalQty;
+      data.total_amount = (up * totalQty).toFixed(2);
+      data.type = normalizeType(data.type);
+      // Convert month qty fields to numbers (or null if 0)
+      Object.values(MONTH_KEYS).forEach(k=>{ data[k]=parseFloat(data[k])||null; });
+      Object.keys(data).forEach(k=>{ if(data[k]===''||data[k]==='0') data[k]=null; });
       try{
         if(S.editId){
           await updateRec(S.editId,data);
@@ -1442,7 +1508,8 @@ const firebaseConfig = {
       const datePrinted =new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
       const MTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
       const Q1=['January','February','March'],Q2=['April','May','June'],Q3=['July','August','September'],Q4=['October','November','December'];
-      function mQty(item,month){ return (item.month||'').toLowerCase()===month.toLowerCase()?(parseFloat(item.quantity)||0):''; }
+      const MKEY={January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'};
+      function mQty(item,month){ const v=parseFloat(item[MKEY[month]]||0); return v>0?v:''; }
       function qSum(item,months){ return months.reduce((s,m)=>{ const v=mQty(item,m); return s+(v===''?0:v); },0); }
       function qAmt(item,months){ const q=qSum(item,months); return q>0?(q*parseFloat(item.unit_price||0)):0; }
       function itemRow(item,idx){
@@ -1455,7 +1522,7 @@ const firebaseConfig = {
         if(!list.length) return '';
         return `<tr class="sec-head"><td colspan="23" class="tl">${label}</td></tr>${list.map((item,i)=>itemRow(item,i+1)).join('')}<tr class="subtotal-row"><td colspan="21" class="tr">Sub-Total (${label})</td><td></td><td class="tr bold">₱${list.reduce((s,i)=>s+parseFloat(i.total_amount||0),0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td></tr>`;
       }
-      const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Annual Procurement Planning — ${dept}</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Times New Roman',serif;font-size:9px;color:#000;background:#fff;}.page{padding:10mm;}.form-title{text-align:center;margin-bottom:6px;}.form-title-main{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.3px;}.form-title-sub{font-size:8px;color:#333;margin-top:2px;}.agency-block{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;margin-bottom:6px;font-size:8px;border:1px solid #999;padding:5px 8px;}.agency-row{display:flex;gap:4px;align-items:flex-end;border-bottom:1px solid #ccc;padding-bottom:2px;margin-bottom:2px;}.agency-label{color:#555;white-space:nowrap;}.agency-val{flex:1;font-weight:700;}table{width:100%;border-collapse:collapse;font-size:6.5px;}th,td{border:1px solid #444;padding:2px 2px;vertical-align:middle;}th{background:#1a3358;color:#fff;font-weight:700;text-align:center;font-size:6px;letter-spacing:.1px;}th.sub-h{background:#2d4f7c;font-size:5.5px;}th.grp{background:#0d2145;}.tl{text-align:left;}.tc{text-align:center;}.tr{text-align:right;}.bold{font-weight:700;}.sec-head td{background:#dce6f1;font-weight:900;font-size:7.5px;text-transform:uppercase;letter-spacing:.5px;padding:3px 6px;color:#1a3358;}.subtotal-row td{background:#f0f4f8;font-weight:700;border-top:1.5px solid #333;font-size:7px;}.grand-total td{background:#1a3358;color:#fff;font-weight:900;font-size:8px;}.sig-block{display:flex;justify-content:space-between;margin-top:40px;gap:20px;}.sig{flex:1;text-align:center;}.sig-line{border-top:1px solid #000;padding-top:4px;margin-top:28px;}.sig-name{font-weight:900;font-size:8px;text-transform:uppercase;}.sig-role{font-size:7px;color:#333;margin-top:2px;font-weight:700;}.sig-title{font-size:6.5px;color:#555;}@media print{body{margin:0;}@page{size:legal landscape;margin:7mm;}}</style></head><body><div class="page"><div class="form-title"><div class="form-title-main">Annual Procurement Plan — Common-Use Supplies and Equipment (APP-CSE) 2025</div><div class="form-title-sub">For items not available in the PS-DBM catalogue but regularly purchased from other sources</div></div><div class="agency-block"><div class="agency-row"><span class="agency-label">Department/Bureau/Office:</span><span class="agency-val">${dept} — Municipality of Balayan</span></div><div class="agency-row"><span class="agency-label">Region:</span><span class="agency-val">CALABARZON (Region IV-A)</span></div><div class="agency-row"><span class="agency-label">Date Printed:</span><span class="agency-val">${datePrinted}</span></div></div><table><thead><tr><th rowspan="3">#</th><th rowspan="3" style="min-width:100px">Item &amp; Specification</th><th rowspan="3">Unit</th><th colspan="9" class="grp">Monthly Quantity Requirement</th><th colspan="8" class="grp">Quarterly Summary</th><th rowspan="3">Total Qty</th><th rowspan="3">Unit Price</th><th rowspan="3">Total Amount</th></tr><tr><th colspan="3" class="grp">Q1</th><th rowspan="2" class="sub-h">Q1</th><th rowspan="2" class="sub-h">Q1 AMT</th><th colspan="3" class="grp">Q2</th><th rowspan="2" class="sub-h">Q2</th><th rowspan="2" class="sub-h">Q2 AMT</th><th colspan="3" class="grp">Q3</th><th rowspan="2" class="sub-h">Q3</th><th rowspan="2" class="sub-h">Q3 AMT</th><th colspan="3" class="grp">Q4</th><th rowspan="2" class="sub-h">Q4</th><th rowspan="2" class="sub-h">Q4 AMT</th></tr><tr><th class="sub-h">Jan</th><th class="sub-h">Feb</th><th class="sub-h">Mar</th><th class="sub-h">Apr</th><th class="sub-h">May</th><th class="sub-h">Jun</th><th class="sub-h">Jul</th><th class="sub-h">Aug</th><th class="sub-h">Sep</th><th class="sub-h">Oct</th><th class="sub-h">Nov</th><th class="sub-h">Dec</th></tr></thead><tbody>${sectionRows(available,'DBM AVAILABLE')}${sectionRows(notAvailable,'DBM NOT AVAILABLE')}<tr class="grand-total"><td colspan="22" class="tr">GRAND TOTAL</td><td></td><td class="tr">₱${grandTotal.toLocaleString('en-PH',{minimumFractionDigits:2})}</td></tr></tbody></table><div class="sig-block"><div class="sig"><div class="sig-line"><div class="sig-name">_______________________________</div><div class="sig-role">Prepared by:</div><div class="sig-title">Property/Supply Officer</div></div></div><div class="sig"><div class="sig-line"><div class="sig-name">NORMANDO BAGAY</div><div class="sig-role">Certified Funds Available</div><div class="sig-title">Accountant / Budget Officer</div></div></div><div class="sig"><div class="sig-line"><div class="sig-name">ELISA E. ABAD</div><div class="sig-role">Approved by:</div><div class="sig-title">Head of Office/Agency</div></div></div></div></div><script>window.onload=function(){window.print();<\/script></body></html>`;
+      const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Annual Procurement Planning — ${dept}</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Times New Roman',serif;font-size:9px;color:#000;background:#fff;}.page{padding:10mm;}.form-title{text-align:center;margin-bottom:6px;}.form-title-main{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.3px;}.form-title-sub{font-size:8px;color:#333;margin-top:2px;}.agency-block{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;margin-bottom:6px;font-size:8px;border:1px solid #999;padding:5px 8px;}.agency-row{display:flex;gap:4px;align-items:flex-end;border-bottom:1px solid #ccc;padding-bottom:2px;margin-bottom:2px;}.agency-label{color:#555;white-space:nowrap;}.agency-val{flex:1;font-weight:700;}table{width:100%;border-collapse:collapse;font-size:6.5px;}th,td{border:1px solid #444;padding:2px 2px;vertical-align:middle;}th{background:#1a3358;color:#fff;font-weight:700;text-align:center;font-size:6px;letter-spacing:.1px;}th.sub-h{background:#2d4f7c;font-size:5.5px;}th.grp{background:#0d2145;}.tl{text-align:left;}.tc{text-align:center;}.tr{text-align:right;}.bold{font-weight:700;}.sec-head td{background:#dce6f1;font-weight:900;font-size:7.5px;text-transform:uppercase;letter-spacing:.5px;padding:3px 6px;color:#1a3358;}.subtotal-row td{background:#f0f4f8;font-weight:700;border-top:1.5px solid #333;font-size:7px;}.grand-total td{background:#1a3358;color:#fff;font-weight:900;font-size:8px;}.sig-block{display:flex;justify-content:space-between;margin-top:40px;gap:20px;}.sig{flex:1;text-align:center;}.sig-line{border-top:1px solid #000;padding-top:4px;margin-top:28px;}.sig-name{font-weight:900;font-size:8px;text-transform:uppercase;}.sig-role{font-size:7px;color:#333;margin-top:2px;font-weight:700;}.sig-title{font-size:6.5px;color:#555;}@media print{body{margin:0;}@page{size:legal landscape;margin:7mm;}}</style></head><body><div class="page"><div class="form-title"><div class="form-title-main">Annual Procurement Plan — Common-Use Supplies and Equipment (APP-CSE) 2025</div><div class="form-title-sub">For items not available in the PS-DBM catalogue but regularly purchased from other sources</div></div><div class="agency-block"><div class="agency-row"><span class="agency-label">Department/Bureau/Office:</span><span class="agency-val">${dept} — Municipality of Balayan</span></div><div class="agency-row"><span class="agency-label">Region:</span><span class="agency-val">CALABARZON (Region IV-A)</span></div><div class="agency-row"><span class="agency-label">Date Printed:</span><span class="agency-val">${datePrinted}</span></div></div><table><thead><tr><th rowspan="3">#</th><th rowspan="3" style="min-width:100px">Item &amp; Specification</th><th rowspan="3">Unit</th><th colspan="9" class="grp">Monthly Quantity Requirement</th><th colspan="8" class="grp">Quarterly Summary</th><th rowspan="3">Total Qty</th><th rowspan="3">Unit Price</th><th rowspan="3">Total Amount</th></tr><tr><th colspan="3" class="grp">Q1</th><th rowspan="2" class="sub-h">Q1</th><th rowspan="2" class="sub-h">Q1 AMT</th><th colspan="3" class="grp">Q2</th><th rowspan="2" class="sub-h">Q2</th><th rowspan="2" class="sub-h">Q2 AMT</th><th colspan="3" class="grp">Q3</th><th rowspan="2" class="sub-h">Q3</th><th rowspan="2" class="sub-h">Q3 AMT</th><th colspan="3" class="grp">Q4</th><th rowspan="2" class="sub-h">Q4</th><th rowspan="2" class="sub-h">Q4 AMT</th></tr><tr><th class="sub-h">Jan</th><th class="sub-h">Feb</th><th class="sub-h">Mar</th><th class="sub-h">Apr</th><th class="sub-h">May</th><th class="sub-h">Jun</th><th class="sub-h">Jul</th><th class="sub-h">Aug</th><th class="sub-h">Sep</th><th class="sub-h">Oct</th><th class="sub-h">Nov</th><th class="sub-h">Dec</th></tr></thead><tbody>${sectionRows(available,'DBM AVAILABLE')}${sectionRows(notAvailable,'DBM NOT AVAILABLE')}<tr class="grand-total"><td colspan="22" class="tr">GRAND TOTAL</td><td></td><td class="tr">₱${grandTotal.toLocaleString('en-PH',{minimumFractionDigits:2})}</td></tr></tbody></table><div class="sig-block"><div class="sig"><div class="sig-line"><div class="sig-name">_______________________________</div><div class="sig-role">Prepared by:</div><div class="sig-title">Property/Supply Officer</div></div></div><div class="sig"><div class="sig-line"><div class="sig-name">NORMANDO BAGAY</div><div class="sig-role">Certified Funds Available</div><div class="sig-title">Accountant / Budget Officer</div></div></div><div class="sig"><div class="sig-line"><div class="sig-name">ELISA E. ABAD</div><div class="sig-role">Approved by:</div><div class="sig-title">Head of Office/Agency</div></div></div></div></div><style>.print-toolbar{position:fixed;top:0;left:0;right:0;background:#1a3358;color:#fff;padding:10px 20px;display:flex;align-items:center;gap:12px;z-index:9999;font-family:sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.3);}@media print{.print-toolbar{display:none!important;}.page{padding-top:0!important;}}<\/style><div class="print-toolbar"><button onclick="window.print()" style="background:#fff;color:#1a3358;border:none;padding:8px 20px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print Document</button><span style="font-size:12px;opacity:.7">Click Print Document or press Ctrl+P</span><button onclick="window.close()" style="margin-left:auto;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer">✕ Close</button></div><div style="height:44px"></div></body></html>`;
       const win=window.open('','_blank','width=1400,height=900');
       win.document.write(html); win.document.close();
     }
@@ -1470,7 +1537,8 @@ const firebaseConfig = {
       const datePrinted =new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
       const MTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
       const Q1=['January','February','March'],Q2=['April','May','June'],Q3=['July','August','September'],Q4=['October','November','December'];
-      function mQty(item,month){ return (item.month||'').toLowerCase()===month.toLowerCase()?(parseFloat(item.quantity)||0):''; }
+      const MKEY={January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'};
+      function mQty(item,month){ const v=parseFloat(item[MKEY[month]]||0); return v>0?v:''; }
       function qSum(item,months){ return months.reduce((s,m)=>{ const v=mQty(item,m); return s+(v===''?0:v); },0); }
       function qAmt(item,months){ const q=qSum(item,months); return q>0?(q*parseFloat(item.unit_price||0)):0; }
       function itemRow(item,idx){
@@ -1483,7 +1551,7 @@ const firebaseConfig = {
         if(!list.length) return '';
         return `<tr class="sec-head"><td colspan="23" class="tl">${label}</td></tr>${list.map((item,i)=>itemRow(item,i+1)).join('')}<tr class="subtotal-row"><td colspan="21" class="tr">Sub-Total (${label})</td><td></td><td class="tr bold">₱${list.reduce((s,i)=>s+parseFloat(i.total_amount||0),0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td></tr>`;
       }
-      const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Annual Procurement Planning — All Departments</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Times New Roman',serif;font-size:9px;color:#000;background:#fff;}.page{padding:10mm;}.form-title{text-align:center;margin-bottom:6px;}.form-title-main{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.3px;}.form-title-sub{font-size:8px;color:#333;margin-top:2px;}.agency-block{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;margin-bottom:6px;font-size:8px;border:1px solid #999;padding:5px 8px;}.agency-row{display:flex;gap:4px;align-items:flex-end;border-bottom:1px solid #ccc;padding-bottom:2px;margin-bottom:2px;}.agency-label{color:#555;white-space:nowrap;}.agency-val{flex:1;font-weight:700;}table{width:100%;border-collapse:collapse;font-size:6.5px;}th,td{border:1px solid #444;padding:2px 2px;vertical-align:middle;}th{background:#1a3358;color:#fff;font-weight:700;text-align:center;font-size:6px;letter-spacing:.1px;}th.sub-h{background:#2d4f7c;font-size:5.5px;}th.grp{background:#0d2145;}.tl{text-align:left;}.tc{text-align:center;}.tr{text-align:right;}.bold{font-weight:700;}.sec-head td{background:#dce6f1;font-weight:900;font-size:7.5px;text-transform:uppercase;letter-spacing:.5px;padding:3px 6px;color:#1a3358;}.subtotal-row td{background:#f0f4f8;font-weight:700;border-top:1.5px solid #333;font-size:7px;}.grand-total td{background:#1a3358;color:#fff;font-weight:900;font-size:8px;}.sig-block{display:flex;justify-content:space-between;margin-top:40px;gap:20px;}.sig{flex:1;text-align:center;}.sig-line{border-top:1px solid #000;padding-top:4px;margin-top:28px;}.sig-name{font-weight:900;font-size:8px;text-transform:uppercase;}.sig-role{font-size:7px;color:#333;margin-top:2px;font-weight:700;}.sig-title{font-size:6.5px;color:#555;}@media print{body{margin:0;}@page{size:legal landscape;margin:7mm;}}</style></head><body><div class="page"><div class="form-title"><div class="form-title-main">Annual Procurement Plan — Common-Use Supplies and Equipment (APP-CSE) 2025</div><div class="form-title-sub">All Departments — Municipality of Balayan, Batangas</div></div><div class="agency-block"><div class="agency-row"><span class="agency-label">Department/Bureau/Office:</span><span class="agency-val">Municipality of Balayan</span></div><div class="agency-row"><span class="agency-label">Region:</span><span class="agency-val">CALABARZON (Region IV-A)</span></div><div class="agency-row"><span class="agency-label">Date Printed:</span><span class="agency-val">${datePrinted}</span></div></div><table><thead><tr><th rowspan="3">#</th><th rowspan="3" style="min-width:100px">Item &amp; Specification</th><th rowspan="3">Unit</th><th colspan="9" class="grp">Monthly Quantity Requirement</th><th colspan="8" class="grp">Quarterly Summary</th><th rowspan="3">Total Qty</th><th rowspan="3">Unit Price</th><th rowspan="3">Total Amount</th></tr><tr><th colspan="3" class="grp">Q1</th><th rowspan="2" class="sub-h">Q1</th><th rowspan="2" class="sub-h">Q1 AMT</th><th colspan="3" class="grp">Q2</th><th rowspan="2" class="sub-h">Q2</th><th rowspan="2" class="sub-h">Q2 AMT</th><th colspan="3" class="grp">Q3</th><th rowspan="2" class="sub-h">Q3</th><th rowspan="2" class="sub-h">Q3 AMT</th><th colspan="3" class="grp">Q4</th><th rowspan="2" class="sub-h">Q4</th><th rowspan="2" class="sub-h">Q4 AMT</th></tr><tr><th class="sub-h">Jan</th><th class="sub-h">Feb</th><th class="sub-h">Mar</th><th class="sub-h">Apr</th><th class="sub-h">May</th><th class="sub-h">Jun</th><th class="sub-h">Jul</th><th class="sub-h">Aug</th><th class="sub-h">Sep</th><th class="sub-h">Oct</th><th class="sub-h">Nov</th><th class="sub-h">Dec</th></tr></thead><tbody>${sectionRows(available,'DBM AVAILABLE')}${sectionRows(notAvailable,'DBM NOT AVAILABLE')}<tr class="grand-total"><td colspan="22" class="tr">GRAND TOTAL</td><td></td><td class="tr">₱${grandTotal.toLocaleString('en-PH',{minimumFractionDigits:2})}</td></tr></tbody></table><div class="sig-block"><div class="sig"><div class="sig-line"><div class="sig-name">_______________________________</div><div class="sig-role">Prepared by:</div><div class="sig-title">Property/Supply Officer</div></div></div><div class="sig"><div class="sig-line"><div class="sig-name">NORMANDO BAGAY</div><div class="sig-role">Certified Funds Available</div><div class="sig-title">Accountant / Budget Officer</div></div></div><div class="sig"><div class="sig-line"><div class="sig-name">ELISA E. ABAD</div><div class="sig-role">Approved by:</div><div class="sig-title">Head of Office/Agency</div></div></div></div></div><script>window.onload=function(){window.print();<\/script></body></html>`;
+      const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Annual Procurement Planning — All Departments</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Times New Roman',serif;font-size:9px;color:#000;background:#fff;}.page{padding:10mm;}.form-title{text-align:center;margin-bottom:6px;}.form-title-main{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.3px;}.form-title-sub{font-size:8px;color:#333;margin-top:2px;}.agency-block{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;margin-bottom:6px;font-size:8px;border:1px solid #999;padding:5px 8px;}.agency-row{display:flex;gap:4px;align-items:flex-end;border-bottom:1px solid #ccc;padding-bottom:2px;margin-bottom:2px;}.agency-label{color:#555;white-space:nowrap;}.agency-val{flex:1;font-weight:700;}table{width:100%;border-collapse:collapse;font-size:6.5px;}th,td{border:1px solid #444;padding:2px 2px;vertical-align:middle;}th{background:#1a3358;color:#fff;font-weight:700;text-align:center;font-size:6px;letter-spacing:.1px;}th.sub-h{background:#2d4f7c;font-size:5.5px;}th.grp{background:#0d2145;}.tl{text-align:left;}.tc{text-align:center;}.tr{text-align:right;}.bold{font-weight:700;}.sec-head td{background:#dce6f1;font-weight:900;font-size:7.5px;text-transform:uppercase;letter-spacing:.5px;padding:3px 6px;color:#1a3358;}.subtotal-row td{background:#f0f4f8;font-weight:700;border-top:1.5px solid #333;font-size:7px;}.grand-total td{background:#1a3358;color:#fff;font-weight:900;font-size:8px;}.sig-block{display:flex;justify-content:space-between;margin-top:40px;gap:20px;}.sig{flex:1;text-align:center;}.sig-line{border-top:1px solid #000;padding-top:4px;margin-top:28px;}.sig-name{font-weight:900;font-size:8px;text-transform:uppercase;}.sig-role{font-size:7px;color:#333;margin-top:2px;font-weight:700;}.sig-title{font-size:6.5px;color:#555;}@media print{body{margin:0;}@page{size:legal landscape;margin:7mm;}}</style></head><body><div class="page"><div class="form-title"><div class="form-title-main">Annual Procurement Plan — Common-Use Supplies and Equipment (APP-CSE) 2025</div><div class="form-title-sub">All Departments — Municipality of Balayan, Batangas</div></div><div class="agency-block"><div class="agency-row"><span class="agency-label">Department/Bureau/Office:</span><span class="agency-val">Municipality of Balayan</span></div><div class="agency-row"><span class="agency-label">Region:</span><span class="agency-val">CALABARZON (Region IV-A)</span></div><div class="agency-row"><span class="agency-label">Date Printed:</span><span class="agency-val">${datePrinted}</span></div></div><table><thead><tr><th rowspan="3">#</th><th rowspan="3" style="min-width:100px">Item &amp; Specification</th><th rowspan="3">Unit</th><th colspan="9" class="grp">Monthly Quantity Requirement</th><th colspan="8" class="grp">Quarterly Summary</th><th rowspan="3">Total Qty</th><th rowspan="3">Unit Price</th><th rowspan="3">Total Amount</th></tr><tr><th colspan="3" class="grp">Q1</th><th rowspan="2" class="sub-h">Q1</th><th rowspan="2" class="sub-h">Q1 AMT</th><th colspan="3" class="grp">Q2</th><th rowspan="2" class="sub-h">Q2</th><th rowspan="2" class="sub-h">Q2 AMT</th><th colspan="3" class="grp">Q3</th><th rowspan="2" class="sub-h">Q3</th><th rowspan="2" class="sub-h">Q3 AMT</th><th colspan="3" class="grp">Q4</th><th rowspan="2" class="sub-h">Q4</th><th rowspan="2" class="sub-h">Q4 AMT</th></tr><tr><th class="sub-h">Jan</th><th class="sub-h">Feb</th><th class="sub-h">Mar</th><th class="sub-h">Apr</th><th class="sub-h">May</th><th class="sub-h">Jun</th><th class="sub-h">Jul</th><th class="sub-h">Aug</th><th class="sub-h">Sep</th><th class="sub-h">Oct</th><th class="sub-h">Nov</th><th class="sub-h">Dec</th></tr></thead><tbody>${sectionRows(available,'DBM AVAILABLE')}${sectionRows(notAvailable,'DBM NOT AVAILABLE')}<tr class="grand-total"><td colspan="22" class="tr">GRAND TOTAL</td><td></td><td class="tr">₱${grandTotal.toLocaleString('en-PH',{minimumFractionDigits:2})}</td></tr></tbody></table><div class="sig-block"><div class="sig"><div class="sig-line"><div class="sig-name">_______________________________</div><div class="sig-role">Prepared by:</div><div class="sig-title">Property/Supply Officer</div></div></div><div class="sig"><div class="sig-line"><div class="sig-name">NORMANDO BAGAY</div><div class="sig-role">Certified Funds Available</div><div class="sig-title">Accountant / Budget Officer</div></div></div><div class="sig"><div class="sig-line"><div class="sig-name">ELISA E. ABAD</div><div class="sig-role">Approved by:</div><div class="sig-title">Head of Office/Agency</div></div></div></div></div><style>.print-toolbar{position:fixed;top:0;left:0;right:0;background:#1a3358;color:#fff;padding:10px 20px;display:flex;align-items:center;gap:12px;z-index:9999;font-family:sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.3);}@media print{.print-toolbar{display:none!important;}.page{padding-top:0!important;}}<\/style><div class="print-toolbar"><button onclick="window.print()" style="background:#fff;color:#1a3358;border:none;padding:8px 20px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print Document</button><span style="font-size:12px;opacity:.7">Click Print Document or press Ctrl+P</span><button onclick="window.close()" style="margin-left:auto;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer">✕ Close</button></div><div style="height:44px"></div></body></html>`;
       const win=window.open('','_blank','width=1400,height=900');
       win.document.write(html); win.document.close();
     }
