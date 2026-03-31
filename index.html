@@ -1614,7 +1614,7 @@ const firebaseConfig = {
     // ═══ SHARED PRINT ENGINE ═══
     function buildPrintHTML(items, deptLabel, titleSuffix){
       const NCOLS = 26; // total columns
-      const grandTotal = items.reduce((s,i)=>s+parseFloat(i.total_amount||0),0);
+      const grandTotal = items.reduce((s,i)=>s+((['January','February','March','April','May','June','July','August','September','October','November','December'].reduce((qs,m)=>{const k={January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'}[m];const v=i[k]!=null?parseFloat(i[k]||0):((i.month||'').toLowerCase()===m.toLowerCase()?parseFloat(i.quantity||0):0);return qs+(v>0?v:0);},0))*parseFloat(i.unit_price||0)),0);
       const datePrinted = new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
       const MTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
       const Q1=['January','February','March'],Q2=['April','May','June'],Q3=['July','August','September'],Q4=['October','November','December'];
@@ -1622,28 +1622,42 @@ const firebaseConfig = {
       const fmtN = n => n>0 ? n.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
       const fmtC = n => '₱'+n.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
 
-      function mQty(item,m){ const v=parseFloat(item[MKEY[m]]||0); return v>0?v:0; }
+      function mQty(item,m){
+        // New format: per-month qty fields (qty_jan, qty_feb, ...)
+        const key = MKEY[m];
+        if(item[key] !== undefined && item[key] !== null){
+          const v = parseFloat(item[key]||0); return v>0?v:0;
+        }
+        // Legacy format: single `month` + `quantity` fields
+        if((item.month||'').toLowerCase() === m.toLowerCase()){
+          return parseFloat(item.quantity||0)||0;
+        }
+        return 0;
+      }
       function qSum(item,months){ return months.reduce((s,m)=>s+mQty(item,m),0); }
       function qAmt(item,months){ const q=qSum(item,months); return q>0?(q*parseFloat(item.unit_price||0)):0; }
 
       function itemRow(item,idx){
         const up=parseFloat(item.unit_price||0);
-        const tQty=parseFloat(item.quantity)||0;
-        const tAmt=parseFloat(item.total_amount||0);
-        const q1=qSum(item,Q1),q1a=qAmt(item,Q1);
-        const q2=qSum(item,Q2),q2a=qAmt(item,Q2);
-        const q3=qSum(item,Q3),q3a=qAmt(item,Q3);
-        const q4=qSum(item,Q4),q4a=qAmt(item,Q4);
         const fc = n=>n>0?n:'';
+        const QUARTERS_DEF = [
+          {months:Q1},{months:Q2},{months:Q3},{months:Q4}
+        ];
+        let quarterCells = '';
+        let tQty = 0;
+        QUARTERS_DEF.forEach(q => {
+          const qty = qSum(item, q.months);
+          const amt = qty * up;
+          tQty += qty;
+          quarterCells += q.months.map(m=>`<td class="tc">${fc(mQty(item,m))}</td>`).join('');
+          quarterCells += `<td class="tc bold">${fc(qty)}</td><td class="tr">${fmtN(amt)}</td>`;
+        });
+        const tAmt = tQty * up;
         return `<tr>
           <td class="tc">${idx}</td>
           <td class="tl item-col">${item.item||''}</td>
           <td class="tc">${item.unit_of_measure||''}</td>
-          ${MTHS.map(m=>`<td class="tc">${fc(mQty(item,m))}</td>`).join('')}
-          <td class="tc bold">${fc(q1)}</td><td class="tr">${fmtN(q1a)}</td>
-          <td class="tc bold">${fc(q2)}</td><td class="tr">${fmtN(q2a)}</td>
-          <td class="tc bold">${fc(q3)}</td><td class="tr">${fmtN(q3a)}</td>
-          <td class="tc bold">${fc(q4)}</td><td class="tr">${fmtN(q4a)}</td>
+          ${quarterCells}
           <td class="tc bold">${tQty||''}</td>
           <td class="tr">${up>0?fmtN(up):''}</td>
           <td class="tr bold">${tAmt>0?fmtN(tAmt):''}</td>
@@ -1662,7 +1676,7 @@ const firebaseConfig = {
 
         const catAvail    = catItems.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
         const catNotAvail = catItems.filter(i=> (i.availability||'').toLowerCase().includes('not'));
-        const catTotal    = catItems.reduce((s,i)=>s+parseFloat(i.total_amount||0),0);
+        const catTotal    = catItems.reduce((s,i)=>s+(qSum(i,[...Q1,...Q2,...Q3,...Q4])*parseFloat(i.unit_price||0)),0);
 
         // Category header
         rowsHTML += `<tr class="cat-head"><td colspan="${NCOLS}" class="tl">${CAT_LABELS[cat]}</td></tr>`;
@@ -1673,7 +1687,7 @@ const firebaseConfig = {
           rowsHTML += `<tr class="subtotal-row">
             <td colspan="${NCOLS-3}" class="tr italic">Sub-Total (Available)</td>
             <td></td><td></td>
-            <td class="tr bold">${fmtN(catAvail.reduce((s,i)=>s+parseFloat(i.total_amount||0),0))}</td>
+            <td class="tr bold">${fmtN(catAvail.reduce((s,i)=>s+(qSum(i,[...Q1,...Q2,...Q3,...Q4])*parseFloat(i.unit_price||0)),0))}</td>
           </tr>`;
         }
 
@@ -1683,7 +1697,7 @@ const firebaseConfig = {
           rowsHTML += `<tr class="subtotal-row">
             <td colspan="${NCOLS-3}" class="tr italic">Sub-Total (Not Available)</td>
             <td></td><td></td>
-            <td class="tr bold">${fmtN(catNotAvail.reduce((s,i)=>s+parseFloat(i.total_amount||0),0))}</td>
+            <td class="tr bold">${fmtN(catNotAvail.reduce((s,i)=>s+(qSum(i,[...Q1,...Q2,...Q3,...Q4])*parseFloat(i.unit_price||0)),0))}</td>
           </tr>`;
         }
 
