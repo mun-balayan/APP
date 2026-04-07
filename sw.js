@@ -1,5 +1,6 @@
-// APP-CSE Service Worker — network-first
-const CACHE = 'app-cse-v24';
+// APP-CSE Service Worker — network-first — v25
+// importer.html merged into index.html; only index needs caching
+const CACHE = 'app-cse-v26';
 const ASSETS = ['./', './index.html'];
 
 self.addEventListener('install', e => {

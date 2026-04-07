@@ -1151,7 +1151,7 @@ tbody td:last-child { border-right: none; }
 
     <div class="sidebar-footer">
       <div class="sidebar-footer-info">
-        <div class="sidebar-footer-label">APP-CSE v25</div>
+        <div class="sidebar-footer-label">APP-CSE v26</div>
         <div class="sidebar-footer-sub">Municipality of Balayan</div>
       </div>
       <div class="sidebar-footer-dot" title="Online"></div>
@@ -2066,8 +2066,14 @@ const firebaseConfig = {
     }
     window.updateFormTotals = updateFormTotals;
 
+    let _savingItem = false; // re-entrancy guard — prevents double-click duplicates
     async function saveItem(){
+      if(_savingItem) return; // already in-flight, ignore extra clicks
       if(!isOnline){ toast('Offline. Cannot save.','error'); return; }
+      // Disable the save button immediately to block rapid double-clicks
+      const saveBtn = document.querySelector('#ifrm .btn-primary');
+      if(saveBtn){ saveBtn.disabled=true; saveBtn.textContent='Saving…'; }
+      _savingItem = true;
       const data={};
       document.querySelectorAll('#ifrm [name]').forEach(el=>data[el.name]=el.value);
       // Compute total quantity from all monthly qty fields
@@ -2089,7 +2095,13 @@ const firebaseConfig = {
           toast('Added successfully!','success');
         }
         closeModal('modal-form'); updateBadges(); window.refreshCurrent();
-      }catch(e){ toast('Error: '+e.message,'error'); }
+      }catch(e){
+        toast('Error: '+e.message,'error');
+        // Re-enable button on error so user can retry
+        if(saveBtn){ saveBtn.disabled=false; saveBtn.textContent='Save Item'; }
+      } finally {
+        _savingItem = false;
+      }
     }
     window.saveItem=saveItem;
 
