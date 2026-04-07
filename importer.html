@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APP-CSE Importer — Municipality of Balayan</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0d1117;color:#e6edf3;min-height:100vh;padding:32px 20px;}
+.container{max-width:900px;margin:0 auto;}
+h1{font-size:24px;font-weight:700;color:#3fb950;margin-bottom:4px;}
+.sub{font-size:13px;color:#8b949e;margin-bottom:32px;}
+.card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px;margin-bottom:20px;}
+.card-title{font-size:14px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.step-badge{width:22px;height:22px;border-radius:50%;background:#21262d;border:1px solid #30363d;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#8b949e;flex-shrink:0;}
+.step-badge.done{background:#238636;border-color:#2ea043;color:#fff;}
+.drop-zone{border:2px dashed #30363d;border-radius:8px;padding:40px;text-align:center;cursor:pointer;transition:all .2s;}
+.drop-zone:hover,.drop-zone.over{border-color:#3fb950;background:rgba(46,160,67,.05);}
+.drop-zone-icon{font-size:40px;margin-bottom:12px;}
+.drop-zone-text{font-size:14px;color:#8b949e;}
+.drop-zone-text strong{color:#3fb950;}
+.file-name{margin-top:8px;font-size:13px;color:#3fb950;font-weight:600;}
+#file-input{display:none;}
+.mode-selector{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.mode-card{border:2px solid #30363d;border-radius:8px;padding:16px;cursor:pointer;transition:all .2s;user-select:none;}
+.mode-card:hover{border-color:#58a6ff;background:rgba(88,166,255,.04);}
+.mode-card.selected{border-color:#2ea043;background:rgba(46,160,67,.06);}
+.mode-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+.mode-desc{font-size:12px;color:#8b949e;line-height:1.5;}
+.mode-warn{font-size:11px;color:#f85149;margin-top:4px;font-weight:600;}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.sum-box{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px;text-align:center;}
+.sum-num{font-size:28px;font-weight:700;color:#3fb950;}
+.sum-label{font-size:10px;color:#8b949e;margin-top:2px;text-transform:uppercase;letter-spacing:.4px;}
+.dept-breakdown{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px;margin-bottom:14px;}
+.dept-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #21262d;font-size:12px;}
+.dept-row:last-child{border-bottom:none;}
+.dept-name{color:#e6edf3;font-weight:600;}
+.dept-count{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;}
+.has-data{background:rgba(46,160,67,.12);color:#3fb950;border:1px solid rgba(46,160,67,.2);}
+.no-data{background:#21262d;color:#484f58;border:1px solid #30363d;}
+.table-outer{overflow:auto;max-height:300px;border:1px solid #30363d;border-radius:8px;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;}
+thead{background:#1c2333;position:sticky;top:0;}
+thead th{padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#8b949e;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid #30363d;white-space:nowrap;}
+tbody tr{border-bottom:1px solid #21262d;}
+tbody tr:hover{background:#1c2333;}
+tbody td{padding:7px 12px;}
+.badge{display:inline-flex;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:600;}
+.bg{background:rgba(46,160,67,.12);color:#3fb950;border:1px solid rgba(46,160,67,.2);}
+.br{background:rgba(248,81,73,.12);color:#f85149;border:1px solid rgba(248,81,73,.2);}
+.bb{background:rgba(88,166,255,.12);color:#58a6ff;border:1px solid rgba(88,166,255,.2);}
+.ba{background:rgba(210,153,34,.12);color:#e3b341;border:1px solid rgba(210,153,34,.2);}
+.bgr{background:#21262d;color:#8b949e;border:1px solid #30363d;}
+.bgr2{background:rgba(107,53,168,.12);color:#c792ea;border:1px solid rgba(107,53,168,.3);}
+.warn-box{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.25);border-radius:8px;padding:14px;margin-bottom:16px;display:none;gap:10px;align-items:flex-start;}
+.warn-box.show{display:flex;}
+.warn-text{font-size:13px;color:#f85149;line-height:1.5;}
+.warn-text strong{display:block;margin-bottom:3px;}
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;}
+.btn-g{background:#2ea043;color:#fff;}
+.btn-g:hover{background:#238636;}
+.btn-g:disabled{background:#21262d;color:#484f58;cursor:not-allowed;}
+.btn-o{background:transparent;color:#8b949e;border:1px solid #30363d;}
+.btn-o:hover{color:#e6edf3;border-color:#8b949e;}
+.btn-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.progress-bar{height:8px;background:#21262d;border-radius:4px;overflow:hidden;margin:12px 0;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#238636,#2ea043);border-radius:4px;transition:width .3s;}
+.log{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;font-family:monospace;font-size:11.5px;max-height:200px;overflow-y:auto;margin-top:10px;}
+.lok{color:#3fb950;} .ler{color:#f85149;} .lin{color:#8b949e;} .lwa{color:#e3b341;}
+.stmsg{font-size:13px;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📋 APP-CSE Excel Importer</h1>
+  <p class="sub">Import Annual Procurement Plan data from Excel (.xlsm/.xlsx) · Municipality of Balayan</p>
+
+  <!-- STEP 1 -->
+  <div class="card">
+    <div class="card-title"><span class="step-badge" id="s1">1</span> Upload Excel File</div>
+    <div class="drop-zone" id="dz" onclick="document.getElementById('file-input').click()"
+      ondragover="dv(event)" ondragleave="dl(event)" ondrop="df(event)">
+      <div class="drop-zone-icon">📂</div>
+      <div class="drop-zone-text"><strong>Click to browse</strong> or drag & drop your .xlsm / .xlsx file</div>
+      <div class="file-name" id="fname"></div>
+    </div>
+    <input type="file" id="file-input" accept=".xlsm,.xlsx,.xls" onchange="handleFile(this.files[0])">
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="card" id="c2" style="display:none">
+    <div class="card-title"><span class="step-badge" id="s2">2</span> Import Mode</div>
+    <div class="mode-selector">
+      <div class="mode-card selected" id="mc-replace" onclick="setMode('replace')">
+        <div class="mode-title">🔄 Replace All</div>
+        <div class="mode-desc">Deletes all existing records in Firestore first, then imports fresh data from the Excel file. Use this when the file has been updated.</div>
+        <div class="mode-warn">⚠ Permanently deletes all current data first</div>
+      </div>
+      <div class="mode-card" id="mc-append" onclick="setMode('append')">
+        <div class="mode-title">➕ Append Only</div>
+        <div class="mode-desc">Keeps all existing records and adds the new records from Excel on top. Use this to add records without removing existing ones.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="card" id="c3" style="display:none">
+    <div class="card-title"><span class="step-badge" id="s3">3</span> Preview Data</div>
+    <div class="summary-grid" id="summary"></div>
+    <div class="dept-breakdown" id="depts"></div>
+    <div class="table-outer"><table id="ptable"></table></div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="card" id="c4" style="display:none">
+    <div class="card-title"><span class="step-badge" id="s4">4</span> Import to Firestore</div>
+    <div class="warn-box" id="wbox">
+      <span style="font-size:18px;flex-shrink:0">⚠️</span>
+      <div class="warn-text">
+        <strong>Replace mode — this will DELETE all existing procurement records!</strong>
+        All current data in <code>procurement_items</code> will be permanently erased before importing. Make sure this is intentional.
+      </div>
+    </div>
+    <p style="font-size:13px;color:#8b949e;margin-bottom:16px">Ready to import <strong id="icount" style="color:#e6edf3"></strong> records into <code style="background:#1c2333;padding:2px 8px;border-radius:4px;color:#3fb950">procurement_items</code>.</p>
+    <div class="btn-row">
+      <button class="btn btn-g" id="ibtn" onclick="startImport()">🚀 Start Import</button>
+      <button class="btn btn-o" onclick="resetAll()">↩ Start Over</button>
+      <span class="stmsg" id="stmsg"></span>
+    </div>
+    <div class="progress-bar" id="pbar" style="display:none"><div class="progress-fill" id="pfill" style="width:0%"></div></div>
+    <div class="log" id="logel" style="display:none"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getFirestore, collection, getDocs, writeBatch, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+const app = initializeApp({
+  apiKey:"AIzaSyCmoO3iEpR1R4GzHK2Z21YfCVV9_VRoMJo",
+  authDomain:"vehicle-maintenance-syst-4fb2e.firebaseapp.com",
+  projectId:"vehicle-maintenance-syst-4fb2e",
+  appId:"1:513108103014:web:7ade19f5a6e6bb3e7f42a7"
+},'app-cse-importer');
+const db = getFirestore(app);
+window._fb = { db, collection, getDocs, writeBatch, doc };
+</script>
+
+<script>
+// Sheet map is built dynamically from the uploaded workbook
+// Any sheet not in SKIP_SHEETS and not ending with ' Other Supplies' or ' Machinery'
+// is treated as a department base sheet (Office Supplies).
+const SKIP_SHEETS = ['ALL','Printing Sheet','Users','Sheet1','Sheet2','Sheet3'];
+let SHEET_MAP = {};
+let ALL_DEPTS = [];
+let rows=[], mode='replace';
+
+function buildSheetMap(sheetNames){
+  SHEET_MAP = {};
+  ALL_DEPTS = [];
+  // Find base dept sheets first
+  sheetNames.forEach(name=>{
+    if(SKIP_SHEETS.includes(name)) return;
+    if(name.endsWith(' Other Supplies') || name.endsWith(' Machinery')) return;
+    const dept = name.trim().toUpperCase();
+    SHEET_MAP[name] = {dept, type:'Office Supplies'};
+    if(!ALL_DEPTS.includes(dept)) ALL_DEPTS.push(dept);
+  });
+  // Then find Other Supplies / Machinery sheets
+  sheetNames.forEach(name=>{
+    if(name.endsWith(' Other Supplies')){
+      const dept = name.slice(0,-15).trim().toUpperCase();
+      SHEET_MAP[name] = {dept, type:'Other Supplies'};
+      if(!ALL_DEPTS.includes(dept)) ALL_DEPTS.push(dept);
+    } else if(name.endsWith(' Machinery')){
+      const dept = name.slice(0,-9).trim().toUpperCase();
+      SHEET_MAP[name] = {dept, type:'Machinery'};
+      if(!ALL_DEPTS.includes(dept)) ALL_DEPTS.push(dept);
+    }
+  });
+}
+
+function dv(e){e.preventDefault();document.getElementById('dz').classList.add('over');}
+function dl(e){document.getElementById('dz').classList.remove('over');}
+function df(e){e.preventDefault();dl(e);handleFile(e.dataTransfer.files[0]);}
+
+function handleFile(file){
+  if(!file) return;
+  document.getElementById('fname').textContent='📄 '+file.name;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+    buildSheetMap(wb.SheetNames);
+    rows=[];
+    Object.entries(SHEET_MAP).forEach(([sheet,meta])=>{
+      const ws=wb.Sheets[sheet]; if(!ws) return;
+      XLSX.utils.sheet_to_json(ws,{defval:''}).forEach(row=>{
+        const item=(row['ITEM']||'').toString().trim(); if(!item) return;
+        const up=parseFloat(row['UNIT PRICE']||0)||0, qty=parseFloat(row['QUANTITY']||0)||0;
+        rows.push({
+          item, department:meta.dept, type:meta.type,
+          unit_of_measure:(row['UNIT OF MEASURE']||'').toString().trim(),
+          month:(row['MONTH']||'').toString().trim(),
+          unit_price:up.toFixed(2), quantity:qty.toString(),
+          total_amount:(up*qty).toFixed(2),
+          availability:(row['AVAILABILITY']||'Available').toString().trim()
+        });
+      });
+    });
+    document.getElementById('s1').className='step-badge done';
+    show('c2'); show('c3'); show('c4');
+    document.getElementById('s2').className='step-badge done';
+    buildPreview();
+    document.getElementById('icount').textContent=rows.length;
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function setMode(m){
+  mode=m;
+  document.getElementById('mc-replace').classList.toggle('selected',m==='replace');
+  document.getElementById('mc-append').classList.toggle('selected',m==='append');
+  document.getElementById('wbox').classList.toggle('show',m==='replace');
+}
+
+function buildPreview(){
+  const byDept={};ALL_DEPTS.forEach(d=>byDept[d]=0);
+  rows.forEach(r=>{if(byDept[r.department]!==undefined)byDept[r.department]++;});
+  const avail=rows.filter(r=>!r.availability.toLowerCase().includes('not')).length;
+  const notA=rows.length-avail;
+  document.getElementById('summary').innerHTML=`
+    <div class="sum-box"><div class="sum-num">${rows.length}</div><div class="sum-label">Total Records</div></div>
+    <div class="sum-box"><div class="sum-num" style="color:#3fb950">${avail}</div><div class="sum-label">Available</div></div>
+    <div class="sum-box"><div class="sum-num" style="color:#f85149">${notA}</div><div class="sum-label">Not Available</div></div>`;
+  document.getElementById('depts').innerHTML=ALL_DEPTS.map(d=>
+    `<div class="dept-row"><span class="dept-name">${d}</span><span class="dept-count ${byDept[d]>0?'has-data':'no-data'}">${byDept[d]>0?byDept[d]+' records':'Empty'}</span></div>`
+  ).join('')+`<div style="font-size:11px;color:#484f58;margin-top:8px">Detected ${ALL_DEPTS.length} department(s) from ${Object.keys(SHEET_MAP).length} sheet(s). Departments showing Empty have no data in the Excel file yet.</div>`;
+  const th=`<thead><tr><th>#</th><th>Item</th><th>Dept</th><th>Type</th><th>Month</th><th>Unit</th><th>Unit Price</th><th>Qty</th><th>Total</th><th>Status</th></tr></thead>`;
+  const shown=rows.slice(0,60);
+  const tb=shown.map((r,i)=>`<tr>
+    <td style="color:#484f58">${i+1}</td>
+    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e6edf3;font-weight:500">${r.item}</td>
+    <td><span class="badge bgr">${r.department}</span></td>
+    <td><span class="badge ${r.type==='Office Supplies'?'bb':r.type==='Machinery'?'ba':r.type==='Other Supplies'?'bgr2':'bgr'}">${r.type}</span></td>
+    <td style="color:#8b949e">${r.month}</td>
+    <td style="color:#8b949e">${r.unit_of_measure}</td>
+    <td style="font-family:monospace;color:#e3b341">₱${parseFloat(r.unit_price).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+    <td style="color:#8b949e">${r.quantity}</td>
+    <td style="font-family:monospace;color:#3fb950;font-weight:700">₱${parseFloat(r.total_amount).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+    <td><span class="badge ${r.availability.toLowerCase().includes('not')?'br':'bg'}">${r.availability}</span></td>
+  </tr>`).join('');
+  const more=rows.length>60?`<tr><td colspan="10" style="text-align:center;color:#484f58;padding:10px">...and ${rows.length-60} more records</td></tr>`:'';
+  document.getElementById('ptable').innerHTML=th+`<tbody>${tb}${more}</tbody>`;
+  document.getElementById('s3').className='step-badge done';
+}
+
+async function startImport(){
+  if(!window._fb){alert('Firebase not ready.');return;}
+  if(!rows.length){alert('No data.');return;}
+  const {db,collection,getDocs,writeBatch,doc}=window._fb;
+  const btn=document.getElementById('ibtn');
+  btn.disabled=true; btn.textContent='Importing…';
+  document.getElementById('pbar').style.display='';
+  document.getElementById('logel').style.display='';
+  const log=(msg,cls='lin')=>{const el=document.getElementById('logel');el.innerHTML+=`<div class="${cls}">${msg}</div>`;el.scrollTop=el.scrollHeight;};
+  const prog=pct=>{document.getElementById('pfill').style.width=pct+'%';};
+  const status=(msg,c='')=>{const el=document.getElementById('stmsg');el.textContent=msg;el.style.color=c||'#8b949e';};
+  try{
+    if(mode==='replace'){
+      log('🗑 Deleting existing records…','lwa');
+      status('Deleting existing records…');
+      const snap=await getDocs(collection(db,'procurement_items'));
+      const existing=snap.docs;
+      if(existing.length>0){
+        for(let i=0;i<existing.length;i+=499){
+          const batch=writeBatch(db);
+          existing.slice(i,i+499).forEach(d=>batch.delete(d.ref));
+          await batch.commit();
+        }
+        log(`✅ Deleted ${existing.length} existing records.`,'lok');
+      } else {
+        log('ℹ️ Collection was empty.','lin');
+      }
+      prog(15);
+    }
+    log(`⏳ Importing ${rows.length} records…`,'lin');
+    status('Importing records…');
+    let done=0;
+    for(let i=0;i<rows.length;i+=499){
+      const batch=writeBatch(db);
+      rows.slice(i,i+499).forEach(row=>{batch.set(doc(collection(db,'procurement_items')),row);});
+      await batch.commit();
+      done+=Math.min(499,rows.length-i);
+      prog(Math.round((mode==='replace'?15:0)+(done/rows.length)*85));
+      log(`✅ Batch ${Math.floor(i/499)+1}: ${done}/${rows.length} records imported`,'lok');
+    }
+    prog(100);
+    const label=mode==='replace'?'replaced':'appended';
+    log(`🎉 Done! ${done} records ${label} successfully.`,'lok');
+    status(`✅ Complete — ${done} records ${label}.`,'#3fb950');
+    btn.textContent='✅ Done';
+    document.getElementById('s4').className='step-badge done';
+  }catch(e){
+    log(`❌ Error: ${e.message}`,'ler');
+    status('Import failed — see log.','#f85149');
+    btn.disabled=false; btn.textContent='🚀 Retry Import';
+  }
+}
+
+function show(id){document.getElementById(id).style.display='';}
+function resetAll(){
+  rows=[];mode='replace';
+  document.getElementById('fname').textContent='';
+  document.getElementById('file-input').value='';
+  ['c2','c3','c4'].forEach(id=>document.getElementById(id).style.display='none');
+  ['s1','s2','s3','s4'].forEach(id=>document.getElementById(id).className='step-badge');
+  document.getElementById('ibtn').disabled=false;
+  document.getElementById('ibtn').textContent='🚀 Start Import';
+  document.getElementById('pfill').style.width='0%';
+  document.getElementById('pbar').style.display='none';
+  document.getElementById('logel').innerHTML='';
+  document.getElementById('logel').style.display='none';
+  document.getElementById('stmsg').textContent='';
+  document.getElementById('mc-replace').classList.add('selected');
+  document.getElementById('mc-append').classList.remove('selected');
+  document.getElementById('wbox').classList.remove('show');
+}
+</script>
+</body>
+</html>

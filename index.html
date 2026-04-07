@@ -19,6 +19,7 @@
     navigator.serviceWorker.addEventListener('controllerchange',()=>{window.location.reload();});
   }
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -229,6 +230,127 @@ body::before {
 .btn-add-top svg { width: 14px; height: 14px; }
 .btn-add-top:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 5px 20px rgba(181,120,10,.52); }
 .btn-add-top:active { transform: translateY(0) scale(.97); }
+
+/* ════ IMPORT BUTTON (topbar) ════ */
+.btn-import-top {
+  background: rgba(88,166,255,.13); color: #7eb8f7;
+  border: 1px solid rgba(88,166,255,.25); border-radius: var(--r);
+  padding: 7px 14px;
+  font-family: var(--ff); font-size: 12px; font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: background var(--t2), border-color var(--t2), color var(--t2);
+  white-space: nowrap; flex-shrink: 0;
+}
+.btn-import-top svg { width: 13px; height: 13px; }
+.btn-import-top:hover { background: rgba(88,166,255,.22); color: #a8d0ff; border-color: rgba(88,166,255,.45); }
+.btn-import-top:active { transform: scale(.97); }
+
+/* ════ IMPORTER DRAWER ════ */
+#importer-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(4,8,16,.72);
+  backdrop-filter: blur(6px);
+  display: none; align-items: stretch; justify-content: flex-end;
+}
+#importer-overlay.open { display: flex; }
+#importer-drawer {
+  width: min(780px, 100vw);
+  background: #0d1117;
+  display: flex; flex-direction: column;
+  border-left: 1px solid rgba(88,166,255,.15);
+  box-shadow: -12px 0 60px rgba(0,0,0,.55);
+  transform: translateX(100%);
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+  overflow: hidden;
+}
+#importer-overlay.open #importer-drawer { transform: translateX(0); }
+.imp-hdr {
+  background: #161b22; border-bottom: 1px solid #30363d;
+  padding: 15px 22px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.imp-hdr-icon { font-size: 20px; }
+.imp-hdr-text { flex: 1; }
+.imp-hdr-title { font-size: 14px; font-weight: 700; color: #e6edf3; }
+.imp-hdr-sub { font-size: 10.5px; color: #8b949e; margin-top: 2px; }
+.imp-close-btn {
+  background: none; border: none; color: #8b949e;
+  cursor: pointer; padding: 6px; border-radius: 8px;
+  transition: background .15s, color .15s; display: flex; align-items: center;
+}
+.imp-close-btn:hover { background: rgba(248,81,73,.12); color: #f85149; }
+.imp-close-btn svg { width: 17px; height: 17px; }
+.imp-body { flex: 1; overflow-y: auto; padding: 18px 22px 28px; }
+.imp-body::-webkit-scrollbar { width: 4px; }
+.imp-body::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+.imp-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px; margin-bottom: 14px; }
+.imp-card-title { font-size: 12.5px; font-weight: 700; color: #e6edf3; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.imp-step-badge {
+  width: 21px; height: 21px; border-radius: 50%;
+  background: #21262d; border: 1px solid #30363d;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10.5px; font-weight: 700; color: #8b949e; flex-shrink: 0;
+}
+.imp-step-badge.done { background: #238636; border-color: #2ea043; color: #fff; }
+.imp-drop {
+  border: 2px dashed #30363d; border-radius: 8px;
+  padding: 28px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s;
+}
+.imp-drop:hover, .imp-drop.over { border-color: #3fb950; background: rgba(46,160,67,.05); }
+.imp-drop-icon { font-size: 32px; margin-bottom: 9px; }
+.imp-drop-text { font-size: 12.5px; color: #8b949e; }
+.imp-drop-text strong { color: #3fb950; }
+.imp-fname { margin-top: 7px; font-size: 11.5px; color: #3fb950; font-weight: 600; }
+.imp-mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.imp-mode-card {
+  border: 2px solid #30363d; border-radius: 8px; padding: 12px;
+  cursor: pointer; transition: border-color .2s, background .2s; user-select: none;
+}
+.imp-mode-card:hover { border-color: #58a6ff; background: rgba(88,166,255,.04); }
+.imp-mode-card.selected { border-color: #2ea043; background: rgba(46,160,67,.06); }
+.imp-mode-title { font-size: 12.5px; font-weight: 700; color: #e6edf3; margin-bottom: 4px; }
+.imp-mode-desc { font-size: 11px; color: #8b949e; line-height: 1.5; }
+.imp-mode-warn { font-size: 10.5px; color: #f85149; margin-top: 4px; font-weight: 600; }
+.imp-sum-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 10px; }
+.imp-sum-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 11px; text-align: center; }
+.imp-sum-num { font-size: 22px; font-weight: 700; color: #3fb950; }
+.imp-sum-lbl { font-size: 9px; color: #8b949e; margin-top: 2px; text-transform: uppercase; letter-spacing: .4px; }
+.imp-dept-bk { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 11px; margin-bottom: 10px; max-height: 160px; overflow-y: auto; }
+.imp-dept-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #21262d; font-size: 11px; }
+.imp-dept-row:last-child { border-bottom: none; }
+.imp-dept-name { color: #e6edf3; font-weight: 600; }
+.imp-dept-cnt { font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 4px; }
+.imp-has-data { background: rgba(46,160,67,.12); color: #3fb950; border: 1px solid rgba(46,160,67,.2); }
+.imp-no-data  { background: #21262d; color: #484f58; border: 1px solid #30363d; }
+.imp-tbl-outer { overflow: auto; max-height: 200px; border: 1px solid #30363d; border-radius: 8px; }
+.imp-tbl-outer table { width: 100%; border-collapse: collapse; font-size: 10.5px; background: transparent; }
+.imp-tbl-outer thead { background: #1c2333; position: sticky; top: 0; }
+.imp-tbl-outer thead th { padding: 7px 10px; text-align: left; font-size: 9px; font-weight: 700; color: #8b949e; letter-spacing: .5px; text-transform: uppercase; border-bottom: 1px solid #30363d; white-space: nowrap; border-right: none; }
+.imp-tbl-outer tbody tr { border-bottom: 1px solid #21262d; }
+.imp-tbl-outer tbody tr:hover { background: #1c2333; }
+.imp-tbl-outer tbody td { padding: 5px 10px; border-right: none; }
+.imp-warn-box { background: rgba(248,81,73,.08); border: 1px solid rgba(248,81,73,.25); border-radius: 8px; padding: 11px 13px; margin-bottom: 12px; display: none; gap: 10px; align-items: flex-start; }
+.imp-warn-box.show { display: flex; }
+.imp-warn-text { font-size: 12px; color: #f85149; line-height: 1.5; }
+.imp-warn-text strong { display: block; margin-bottom: 3px; }
+.imp-btn { display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; font-family: inherit; }
+.imp-btn-g { background: #2ea043; color: #fff; }
+.imp-btn-g:hover { background: #238636; }
+.imp-btn-g:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+.imp-btn-o { background: transparent; color: #8b949e; border: 1px solid #30363d; }
+.imp-btn-o:hover { color: #e6edf3; border-color: #8b949e; }
+.imp-btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.imp-progress { height: 7px; background: #21262d; border-radius: 4px; overflow: hidden; margin: 10px 0; }
+.imp-pfill { height: 100%; background: linear-gradient(90deg,#238636,#2ea043); border-radius: 4px; transition: width .3s; }
+.imp-log { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 11px; font-family: monospace; font-size: 10.5px; max-height: 160px; overflow-y: auto; margin-top: 10px; }
+.ilok{color:#3fb950;}.iler{color:#f85149;}.ilin{color:#8b949e;}.ilwa{color:#e3b341;}
+.imp-stmsg { font-size: 12px; font-weight: 600; }
+.ibg {display:inline-flex;padding:1px 7px;border-radius:4px;font-size:9.5px;font-weight:600;background:rgba(46,160,67,.12);color:#3fb950;border:1px solid rgba(46,160,67,.2);}
+.ibr {display:inline-flex;padding:1px 7px;border-radius:4px;font-size:9.5px;font-weight:600;background:rgba(248,81,73,.12);color:#f85149;border:1px solid rgba(248,81,73,.2);}
+.ibb {display:inline-flex;padding:1px 7px;border-radius:4px;font-size:9.5px;font-weight:600;background:rgba(88,166,255,.12);color:#58a6ff;border:1px solid rgba(88,166,255,.2);}
+.iba {display:inline-flex;padding:1px 7px;border-radius:4px;font-size:9.5px;font-weight:600;background:rgba(210,153,34,.12);color:#e3b341;border:1px solid rgba(210,153,34,.2);}
+.ibgr{display:inline-flex;padding:1px 7px;border-radius:4px;font-size:9.5px;font-weight:600;background:#21262d;color:#8b949e;border:1px solid #30363d;}
+.ibp {display:inline-flex;padding:1px 7px;border-radius:4px;font-size:9.5px;font-weight:600;background:rgba(107,53,168,.12);color:#c792ea;border:1px solid rgba(107,53,168,.3);}
 
 #mobile-menu-btn {
   display: none; background: none; border: none;
@@ -988,6 +1110,10 @@ tbody td:last-child { border-right: none; }
 
   <div class="tb-right">
     <div class="tb-clock" id="topbar-clock"></div>
+    <button class="btn-import-top" onclick="openImporter()">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v10M6 9l4 4 4-4"/><path d="M4 16h12"/></svg>
+      Import Excel
+    </button>
     <button class="btn-add-top" id="topbar-add-btn" onclick="openAddModal()">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
       Add Item
@@ -1025,7 +1151,7 @@ tbody td:last-child { border-right: none; }
 
     <div class="sidebar-footer">
       <div class="sidebar-footer-info">
-        <div class="sidebar-footer-label">APP-CSE v22</div>
+        <div class="sidebar-footer-label">APP-CSE v25</div>
         <div class="sidebar-footer-sub">Municipality of Balayan</div>
       </div>
       <div class="sidebar-footer-dot" title="Online"></div>
@@ -1169,6 +1295,81 @@ tbody td:last-child { border-right: none; }
 </div><!-- /#main-area -->
 </div><!-- /#shell -->
 
+<!-- ═══ IMPORTER DRAWER ═══ -->
+<div id="importer-overlay" onclick="impOverlayClick(event)">
+  <div id="importer-drawer">
+    <div class="imp-hdr">
+      <div class="imp-hdr-icon">📋</div>
+      <div class="imp-hdr-text">
+        <div class="imp-hdr-title">Excel Importer — APP-CSE</div>
+        <div class="imp-hdr-sub">Import procurement records from .xlsm / .xlsx · All departments auto-detected</div>
+      </div>
+      <button class="imp-close-btn" onclick="closeImporter()" aria-label="Close importer">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+      </button>
+    </div>
+    <div class="imp-body">
+
+      <!-- Step 1: Upload -->
+      <div class="imp-card">
+        <div class="imp-card-title"><span class="imp-step-badge" id="imp-s1">1</span> Upload Excel File</div>
+        <div class="imp-drop" id="imp-dz" onclick="document.getElementById('imp-file').click()"
+          ondragover="impDv(event)" ondragleave="impDl(event)" ondrop="impDf(event)">
+          <div class="imp-drop-icon">📂</div>
+          <div class="imp-drop-text"><strong>Click to browse</strong> or drag & drop your .xlsm / .xlsx file</div>
+          <div class="imp-fname" id="imp-fname"></div>
+        </div>
+        <input type="file" id="imp-file" accept=".xlsm,.xlsx,.xls" style="display:none" onchange="impHandleFile(this.files[0])">
+      </div>
+
+      <!-- Step 2: Mode -->
+      <div class="imp-card" id="imp-c2" style="display:none">
+        <div class="imp-card-title"><span class="imp-step-badge" id="imp-s2">2</span> Import Mode</div>
+        <div class="imp-mode-grid">
+          <div class="imp-mode-card selected" id="imp-mc-replace" onclick="impSetMode('replace')">
+            <div class="imp-mode-title">🔄 Replace All</div>
+            <div class="imp-mode-desc">Deletes all existing records first, then imports fresh data from the file.</div>
+            <div class="imp-mode-warn">⚠ Permanently deletes all current data first</div>
+          </div>
+          <div class="imp-mode-card" id="imp-mc-append" onclick="impSetMode('append')">
+            <div class="imp-mode-title">➕ Append Only</div>
+            <div class="imp-mode-desc">Keeps existing records and adds new ones from the Excel file on top.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Preview -->
+      <div class="imp-card" id="imp-c3" style="display:none">
+        <div class="imp-card-title"><span class="imp-step-badge" id="imp-s3">3</span> Preview Data</div>
+        <div class="imp-sum-grid" id="imp-summary"></div>
+        <div class="imp-dept-bk" id="imp-depts"></div>
+        <div class="imp-tbl-outer"><table id="imp-ptable"></table></div>
+      </div>
+
+      <!-- Step 4: Import -->
+      <div class="imp-card" id="imp-c4" style="display:none">
+        <div class="imp-card-title"><span class="imp-step-badge" id="imp-s4">4</span> Import to Firestore</div>
+        <div class="imp-warn-box" id="imp-wbox">
+          <span style="font-size:17px;flex-shrink:0">⚠️</span>
+          <div class="imp-warn-text">
+            <strong>Replace mode — this will DELETE all existing procurement records!</strong>
+            All data in <code>procurement_items</code> will be permanently erased before importing.
+          </div>
+        </div>
+        <p style="font-size:12px;color:#8b949e;margin-bottom:14px">Ready to import <strong id="imp-icount" style="color:#e6edf3"></strong> records into <code style="background:#1c2333;padding:2px 7px;border-radius:4px;color:#3fb950">procurement_items</code>.</p>
+        <div class="imp-btn-row">
+          <button class="imp-btn imp-btn-g" id="imp-ibtn" onclick="impStart()">🚀 Start Import</button>
+          <button class="imp-btn imp-btn-o" onclick="impReset()">↩ Start Over</button>
+          <span class="imp-stmsg" id="imp-stmsg"></span>
+        </div>
+        <div class="imp-progress" id="imp-pbar" style="display:none"><div class="imp-pfill" id="imp-pfill" style="width:0%"></div></div>
+        <div class="imp-log" id="imp-log" style="display:none"></div>
+      </div>
+
+    </div><!-- /.imp-body -->
+  </div><!-- /#importer-drawer -->
+</div><!-- /#importer-overlay -->
+
 <!-- MODALS -->
 <div class="modal-overlay" id="modal-item" onclick="closeOverlay(event,'modal-item')">
   <div class="modal">
@@ -1235,7 +1436,7 @@ tbody td:last-child { border-right: none; }
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getFirestore, collection, getDocs, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getFirestore, collection, getDocs, onSnapshot, addDoc, updateDoc, deleteDoc, doc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey:     "AIzaSyCmoO3iEpR1R4GzHK2Z21YfCVV9_VRoMJo",
@@ -1248,6 +1449,9 @@ const firebaseConfig = {
   try {
     const app = initializeApp(firebaseConfig, 'app-cse');
     const db  = getFirestore(app);
+
+    // Expose to importer (non-module script)
+    window._fb = { db, collection, getDocs, writeBatch, doc };
 
     // ── Online/Offline ──
     let isOnline = true;
@@ -1316,6 +1520,7 @@ const firebaseConfig = {
           if(!d.renamedFrom && !DEPTS.includes(d.name)) DEPTS.push(d.name);
         });
       } catch(e){ /* use defaults */ }
+      window._DEPTS_REF = DEPTS; // expose to importer
       renderDeptNav();
       updateFilterDepts();
     }
@@ -1433,6 +1638,7 @@ const firebaseConfig = {
         const ref = await addDoc(deptCol(), { name, createdAt: new Date().toISOString() });
         CUSTOM_DEPT_DOCS.push({ id: ref.id, name });
         DEPTS.push(name);
+        window._DEPTS_REF = DEPTS; // keep importer reference fresh
         renderDeptNav();
         updateFilterDepts();
         renderDeptList();
@@ -1442,6 +1648,18 @@ const firebaseConfig = {
       } catch(e){ toast('Error: '+e.message,'error'); }
     }
     window.saveDept = saveDept;
+
+    // Silent dept adder for importer auto-registration
+    window._DEPTS_REF = DEPTS;
+    window._addDeptSilent = async function(name){
+      name = name.trim().toUpperCase();
+      if(!name || DEPTS.includes(name)) return;
+      const ref = await addDoc(deptCol(), { name, createdAt: new Date().toISOString() });
+      CUSTOM_DEPT_DOCS.push({ id: ref.id, name });
+      DEPTS.push(name);
+      window._DEPTS_REF = DEPTS;
+      renderDeptNav(); updateFilterDepts(); updateBadges();
+    };
 
     // ── Firestore item ops ──
     async function getAll(){
@@ -2602,6 +2820,230 @@ function toast(msg,type='success'){
   clearTimeout(toastTimer);
   toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
 }
+</script>
+
+<!-- ═══ IMPORTER SCRIPT ═══ -->
+<script>
+(function(){
+  // ── Sheet detection ──
+  const SKIP_SHEETS = ['ALL','Printing Sheet','Users','Sheet1','Sheet2','Sheet3'];
+  let IMP_SHEET_MAP = {}, IMP_ALL_DEPTS = [], IMP_ROWS = [], IMP_MODE = 'replace';
+
+  function impBuildSheetMap(names){
+    IMP_SHEET_MAP = {}; IMP_ALL_DEPTS = [];
+    // Base department sheets (Office Supplies)
+    names.forEach(n=>{
+      if(SKIP_SHEETS.includes(n)) return;
+      if(n.endsWith(' Other Supplies') || n.endsWith(' Machinery')) return;
+      const d = n.trim().toUpperCase();
+      IMP_SHEET_MAP[n] = {dept:d, type:'Office Supplies'};
+      if(!IMP_ALL_DEPTS.includes(d)) IMP_ALL_DEPTS.push(d);
+    });
+    // Suffix sheets
+    names.forEach(n=>{
+      if(n.endsWith(' Other Supplies')){
+        const d = n.slice(0,-15).trim().toUpperCase();
+        IMP_SHEET_MAP[n] = {dept:d, type:'Other Supplies'};
+        if(!IMP_ALL_DEPTS.includes(d)) IMP_ALL_DEPTS.push(d);
+      } else if(n.endsWith(' Machinery')){
+        const d = n.slice(0,-9).trim().toUpperCase();
+        IMP_SHEET_MAP[n] = {dept:d, type:'Machinery'};
+        if(!IMP_ALL_DEPTS.includes(d)) IMP_ALL_DEPTS.push(d);
+      }
+    });
+  }
+
+  // ── Drawer open / close ──
+  window.openImporter   = ()=>{ document.getElementById('importer-overlay').classList.add('open'); };
+  window.closeImporter  = ()=>{ document.getElementById('importer-overlay').classList.remove('open'); };
+  window.impOverlayClick = e=>{ if(e.target.id==='importer-overlay') closeImporter(); };
+
+  // ── Drag-and-drop helpers ──
+  window.impDv = e=>{ e.preventDefault(); document.getElementById('imp-dz').classList.add('over'); };
+  window.impDl = e=>{ document.getElementById('imp-dz').classList.remove('over'); };
+  window.impDf = e=>{ e.preventDefault(); impDl(e); impHandleFile(e.dataTransfer.files[0]); };
+
+  // ── File handler ──
+  window.impHandleFile = function(file){
+    if(!file) return;
+    document.getElementById('imp-fname').textContent = '📄 '+file.name;
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      const wb = XLSX.read(ev.target.result, {type:'array', cellDates:true});
+      impBuildSheetMap(wb.SheetNames);
+      IMP_ROWS = [];
+      Object.entries(IMP_SHEET_MAP).forEach(([sheet, meta])=>{
+        const ws = wb.Sheets[sheet]; if(!ws) return;
+        XLSX.utils.sheet_to_json(ws, {defval:''}).forEach(row=>{
+          const item = (row['ITEM']||'').toString().trim(); if(!item) return;
+          const up  = parseFloat(row['UNIT PRICE']||0)||0;
+          const qty = parseFloat(row['QUANTITY']||0)||0;
+          IMP_ROWS.push({
+            item,
+            department        : meta.dept,
+            type              : meta.type,
+            unit_of_measure   : (row['UNIT OF MEASURE']||'').toString().trim(),
+            month             : (row['MONTH']||'').toString().trim(),
+            unit_price        : up.toFixed(2),
+            quantity          : qty.toString(),
+            total_amount      : (up*qty).toFixed(2),
+            availability      : (row['AVAILABILITY']||'Available').toString().trim()
+          });
+        });
+      });
+      document.getElementById('imp-s1').className = 'imp-step-badge done';
+      ['imp-c2','imp-c3','imp-c4'].forEach(id=>{ document.getElementById(id).style.display=''; });
+      document.getElementById('imp-s2').className = 'imp-step-badge done';
+      impBuildPreview();
+      document.getElementById('imp-icount').textContent = IMP_ROWS.length;
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  // ── Mode toggle ──
+  window.impSetMode = function(m){
+    IMP_MODE = m;
+    document.getElementById('imp-mc-replace').classList.toggle('selected', m==='replace');
+    document.getElementById('imp-mc-append').classList.toggle('selected',  m==='append');
+    document.getElementById('imp-wbox').classList.toggle('show', m==='replace');
+  };
+
+  // ── Preview ──
+  function impBuildPreview(){
+    const byDept = {}; IMP_ALL_DEPTS.forEach(d=>byDept[d]=0);
+    IMP_ROWS.forEach(r=>{ if(byDept[r.department]!==undefined) byDept[r.department]++; });
+    const avail = IMP_ROWS.filter(r=>!r.availability.toLowerCase().includes('not')).length;
+    const notA  = IMP_ROWS.length - avail;
+
+    document.getElementById('imp-summary').innerHTML = `
+      <div class="imp-sum-box"><div class="imp-sum-num">${IMP_ROWS.length}</div><div class="imp-sum-lbl">Total Records</div></div>
+      <div class="imp-sum-box"><div class="imp-sum-num" style="color:#3fb950">${avail}</div><div class="imp-sum-lbl">Available</div></div>
+      <div class="imp-sum-box"><div class="imp-sum-num" style="color:#f85149">${notA}</div><div class="imp-sum-lbl">Not Available</div></div>`;
+
+    document.getElementById('imp-depts').innerHTML =
+      IMP_ALL_DEPTS.map(d=>
+        `<div class="imp-dept-row">
+          <span class="imp-dept-name">${d}</span>
+          <span class="imp-dept-cnt ${byDept[d]>0?'imp-has-data':'imp-no-data'}">${byDept[d]>0?byDept[d]+' records':'Empty'}</span>
+        </div>`
+      ).join('') +
+      `<div style="font-size:10.5px;color:#484f58;margin-top:7px">
+        ${IMP_ALL_DEPTS.length} department(s) across ${Object.keys(IMP_SHEET_MAP).length} sheet(s) detected.
+        Departments not yet in the app will be auto-registered on import.
+      </div>`;
+
+    const th = `<thead><tr>
+      <th>#</th><th>Item</th><th>Dept</th><th>Type</th>
+      <th>Month</th><th>Unit</th><th>Price</th><th>Qty</th><th>Total</th><th>Status</th>
+    </tr></thead>`;
+    const shown = IMP_ROWS.slice(0, 60);
+    const tb = shown.map((r,i)=>`<tr>
+      <td style="color:#484f58">${i+1}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e6edf3;font-weight:500">${r.item}</td>
+      <td><span class="ibgr">${r.department}</span></td>
+      <td><span class="${r.type==='Office Supplies'?'ibb':r.type==='Machinery'?'iba':r.type==='Other Supplies'?'ibp':'ibgr'}">${r.type}</span></td>
+      <td style="color:#8b949e">${r.month}</td>
+      <td style="color:#8b949e">${r.unit_of_measure}</td>
+      <td style="font-family:monospace;color:#e3b341">₱${parseFloat(r.unit_price).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+      <td style="color:#8b949e">${r.quantity}</td>
+      <td style="font-family:monospace;color:#3fb950;font-weight:700">₱${parseFloat(r.total_amount).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+      <td><span class="${r.availability.toLowerCase().includes('not')?'ibr':'ibg'}">${r.availability}</span></td>
+    </tr>`).join('');
+    const more = IMP_ROWS.length>60
+      ? `<tr><td colspan="10" style="text-align:center;color:#484f58;padding:8px">…and ${IMP_ROWS.length-60} more records</td></tr>` : '';
+    document.getElementById('imp-ptable').innerHTML = th+`<tbody>${tb}${more}</tbody>`;
+    document.getElementById('imp-s3').className = 'imp-step-badge done';
+  }
+
+  // ── Firestore import ──
+  window.impStart = async function(){
+    if(!window._fb){ alert('Firebase not ready yet — try again in a moment.'); return; }
+    if(!IMP_ROWS.length){ alert('No data to import.'); return; }
+    const {db, collection, getDocs, writeBatch, doc} = window._fb;
+
+    const btn = document.getElementById('imp-ibtn');
+    btn.disabled = true; btn.textContent = 'Importing…';
+    document.getElementById('imp-pbar').style.display = '';
+    document.getElementById('imp-log').style.display  = '';
+
+    const log    = (msg,cls='ilin')=>{ const el=document.getElementById('imp-log'); el.innerHTML+=`<div class="${cls}">${msg}</div>`; el.scrollTop=el.scrollHeight; };
+    const prog   = pct=>{ document.getElementById('imp-pfill').style.width=pct+'%'; };
+    const status = (msg,c='')=>{ const el=document.getElementById('imp-stmsg'); el.textContent=msg; el.style.color=c||'#8b949e'; };
+
+    try{
+      // ── Delete phase (Replace mode) ──
+      if(IMP_MODE==='replace'){
+        log('🗑 Deleting existing records…','ilwa');
+        status('Deleting…');
+        const snap = await getDocs(collection(db,'procurement_items'));
+        if(snap.docs.length>0){
+          for(let i=0;i<snap.docs.length;i+=499){
+            const batch = writeBatch(db);
+            snap.docs.slice(i,i+499).forEach(d=>batch.delete(d.ref));
+            await batch.commit();
+          }
+          log(`✅ Deleted ${snap.docs.length} existing records.`,'ilok');
+        } else {
+          log('ℹ️ Collection was already empty.','ilin');
+        }
+        prog(15);
+      }
+
+      // ── Auto-register new departments found in the Excel file ──
+      if(typeof window._addDeptSilent === 'function'){
+        for(const dept of IMP_ALL_DEPTS){
+          if(typeof window._DEPTS_REF !== 'undefined' && !window._DEPTS_REF.includes(dept)){
+            try{ await window._addDeptSilent(dept); log(`🏢 Auto-added department: ${dept}`,'ilin'); } catch(_){}
+          }
+        }
+      }
+
+      // ── Write phase ──
+      log(`⏳ Writing ${IMP_ROWS.length} records…`,'ilin');
+      status('Writing records…');
+      let done = 0;
+      for(let i=0;i<IMP_ROWS.length;i+=499){
+        const batch = writeBatch(db);
+        IMP_ROWS.slice(i,i+499).forEach(row=>{ batch.set(doc(collection(db,'procurement_items')), row); });
+        await batch.commit();
+        done += Math.min(499, IMP_ROWS.length-i);
+        prog(Math.round((IMP_MODE==='replace'?15:0)+(done/IMP_ROWS.length)*85));
+        log(`✅ Batch ${Math.floor(i/499)+1}: ${done}/${IMP_ROWS.length} records written`,'ilok');
+      }
+      prog(100);
+      const label = IMP_MODE==='replace' ? 'replaced' : 'appended';
+      log(`🎉 Done! ${done} records ${label} successfully.`,'ilok');
+      status(`✅ Complete — ${done} records ${label}.`,'#3fb950');
+      btn.textContent = '✅ Done';
+      document.getElementById('imp-s4').className = 'imp-step-badge done';
+      if(typeof toast === 'function') toast(`Import complete — ${done} records ${label}`, 'success');
+
+    } catch(e){
+      log(`❌ Error: ${e.message}`,'iler');
+      status('Import failed — see log.','#f85149');
+      btn.disabled = false; btn.textContent = '🚀 Retry Import';
+    }
+  };
+
+  // ── Reset ──
+  window.impReset = function(){
+    IMP_ROWS=[]; IMP_MODE='replace';
+    document.getElementById('imp-fname').textContent = '';
+    document.getElementById('imp-file').value = '';
+    ['imp-c2','imp-c3','imp-c4'].forEach(id=>document.getElementById(id).style.display='none');
+    ['imp-s1','imp-s2','imp-s3','imp-s4'].forEach(id=>document.getElementById(id).className='imp-step-badge');
+    const ibtn = document.getElementById('imp-ibtn');
+    ibtn.disabled = false; ibtn.textContent = '🚀 Start Import';
+    document.getElementById('imp-pfill').style.width  = '0%';
+    document.getElementById('imp-pbar').style.display = 'none';
+    document.getElementById('imp-log').innerHTML      = '';
+    document.getElementById('imp-log').style.display  = 'none';
+    document.getElementById('imp-stmsg').textContent  = '';
+    document.getElementById('imp-mc-replace').classList.add('selected');
+    document.getElementById('imp-mc-append').classList.remove('selected');
+    document.getElementById('imp-wbox').classList.remove('show');
+  };
+})();
 </script>
 </body>
 </html>
