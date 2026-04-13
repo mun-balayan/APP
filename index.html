@@ -43,10 +43,9 @@
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo">
-     <img class="tb-seal" src="./logo.png" alt="Balayan Seal"
-  onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <img src="./logo.png" alt="Logo" onerror="this.style.display='none'">
     </div>
-    <div class="login-title">Annual Procurement Planning System</div>
+    <div class="login-title">APP-CSE 2026</div>
     <div class="login-sub">Municipality of Balayan — General Services Office</div>
     <div class="login-form">
       <div class="login-field">
@@ -69,7 +68,8 @@
 <!-- TOP BAR -->
 <div id="topbar">
   <div class="tb-brand">
-    <img src="./logo.png" alt="Logo" onerror="this.style.display='none'">
+    <img class="tb-seal" src="./logo.png" alt="Balayan Seal"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
     <div class="tb-seal-fb">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>
     </div>
@@ -90,6 +90,10 @@
     <button class="btn-import-top" onclick="openImporter()">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v10M6 9l4 4 4-4"/><path d="M4 16h12"/></svg>
       Import Excel
+    </button>
+    <button class="btn-add-top" id="topbar-add-btn" onclick="openAddModal()">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+      Add Item
     </button>
   </div>
 </div>
