@@ -87,6 +87,11 @@
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3h4v14h-4M8 14l4-4-4-4M12 10H4"/></svg>
       Log Out
     </button>
+    <button class="btn-purchase-top" id="btn-purchase-top" onclick="openCart()">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h1.5l2.5 9h8l2-6H6"/><circle cx="9" cy="17" r="1.2"/><circle cx="15" cy="17" r="1.2"/></svg>
+      Purchase
+      <span class="cart-badge" id="cart-badge" style="display:none">0</span>
+    </button>
     <button class="btn-import-top" onclick="openImporter()">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v10M6 9l4 4 4-4"/><path d="M4 16h12"/></svg>
       Import Excel
@@ -105,10 +110,20 @@
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
         <span class="snav-label">Dashboard</span>
       </button>
-      <button class="snav-btn" id="tab-items" onclick="switchPage('items')">
+      <button class="snav-btn" id="tab-office" onclick="switchPage('office')">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>
-        <span class="snav-label">All Items</span>
-        <span class="snav-badge" id="badge-all">—</span>
+        All Office Supplies
+        <span class="snav-badge" id="badge-office">—</span>
+      </button>
+      <button class="snav-btn" id="tab-other" onclick="switchPage('other')">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>
+        All Other Supplies
+        <span class="snav-badge" id="badge-other">—</span>
+      </button>
+      <button class="snav-btn" id="tab-machinery" onclick="switchPage('machinery')">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>
+        All Machinery
+        <span class="snav-badge" id="badge-machinery">—</span>
       </button>
       <button class="snav-btn" id="tab-catalog" onclick="switchPage('catalog')">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h14M3 9h10M3 13h7"/><rect x="13" y="10" width="5" height="8" rx="1"/></svg>
@@ -127,7 +142,7 @@
 
     <div class="sidebar-footer">
       <div class="sidebar-footer-info">
-        <div class="sidebar-footer-label">APP-CSE v28</div>
+        <div class="sidebar-footer-label">APP-CSE v30</div>
         <div class="sidebar-footer-sub">Municipality of Balayan</div>
       </div>
       <div class="sidebar-footer-dot" title="Online"></div>
@@ -150,6 +165,141 @@
             <div class="loading-spinner"></div><br>Loading procurement data…
           </div>
         </div>
+      </div>
+
+      <!-- ALL OFFICE SUPPLIES -->
+      <div class="page" id="page-office">
+        <div class="page-header">
+          <div>
+            <div class="page-title">All <em>Office Supplies</em></div>
+            <div class="page-sub">
+              Annual Procurement Plan — All Departments
+              <span class="count-chip" id="office-count"></span>
+            </div>
+          </div>
+          <div class="hdr-actions">
+            <button class="btn btn-outline btn-sm" onclick="printAllOffice()">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7V3h8v4"/><rect x="3" y="7" width="14" height="8" rx="1.5"/><path d="M6 13h8M6 15v2h8v-2"/></svg>
+              Print All
+            </button>
+            <button class="btn btn-gold btn-sm" onclick="openAddModal()">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+              Add Item
+            </button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg class="search-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M17 17l-3.5-3.5"/></svg>
+            <input class="search-input" id="office-search" placeholder="Search items, departments, types…" oninput="filterOffice()">
+          </div>
+          <select class="filter-sel" id="office-dept" onchange="filterOffice()">
+            <option value="">All Departments</option>
+          </select>
+          <select class="filter-sel" id="office-month" onchange="filterOffice()">
+            <option value="">All Months</option>
+            <option>January</option><option>February</option><option>March</option>
+            <option>April</option><option>May</option><option>June</option>
+            <option>July</option><option>August</option><option>September</option>
+            <option>October</option><option>November</option><option>December</option>
+          </select>
+          <select class="filter-sel" id="office-avail" onchange="filterOffice()">
+            <option value="">All Availability</option>
+            <option value="available">✓ Available</option>
+            <option value="not">✗ Not Available</option>
+          </select>
+        </div>
+        <div id="office-table"></div>
+      </div>
+
+      <!-- ALL OTHER SUPPLIES -->
+      <div class="page" id="page-other">
+        <div class="page-header">
+          <div>
+            <div class="page-title">All <em>Other Supplies</em></div>
+            <div class="page-sub">
+              Annual Procurement Plan — All Departments
+              <span class="count-chip" id="other-count"></span>
+            </div>
+          </div>
+          <div class="hdr-actions">
+            <button class="btn btn-outline btn-sm" onclick="printAllOther()">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7V3h8v4"/><rect x="3" y="7" width="14" height="8" rx="1.5"/><path d="M6 13h8M6 15v2h8v-2"/></svg>
+              Print All
+            </button>
+            <button class="btn btn-gold btn-sm" onclick="openAddModal()">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+              Add Item
+            </button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg class="search-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M17 17l-3.5-3.5"/></svg>
+            <input class="search-input" id="other-search" placeholder="Search items, departments, types…" oninput="filterOther()">
+          </div>
+          <select class="filter-sel" id="other-dept" onchange="filterOther()">
+            <option value="">All Departments</option>
+          </select>
+          <select class="filter-sel" id="other-month" onchange="filterOther()">
+            <option value="">All Months</option>
+            <option>January</option><option>February</option><option>March</option>
+            <option>April</option><option>May</option><option>June</option>
+            <option>July</option><option>August</option><option>September</option>
+            <option>October</option><option>November</option><option>December</option>
+          </select>
+          <select class="filter-sel" id="other-avail" onchange="filterOther()">
+            <option value="">All Availability</option>
+            <option value="available">✓ Available</option>
+            <option value="not">✗ Not Available</option>
+          </select>
+        </div>
+        <div id="other-table"></div>
+      </div>
+
+      <!-- ALL MACHINERY -->
+      <div class="page" id="page-machinery">
+        <div class="page-header">
+          <div>
+            <div class="page-title">All <em>Machinery</em></div>
+            <div class="page-sub">
+              Annual Procurement Plan — All Departments
+              <span class="count-chip" id="machinery-count"></span>
+            </div>
+          </div>
+          <div class="hdr-actions">
+            <button class="btn btn-outline btn-sm" onclick="printAllMachinery()">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7V3h8v4"/><rect x="3" y="7" width="14" height="8" rx="1.5"/><path d="M6 13h8M6 15v2h8v-2"/></svg>
+              Print All
+            </button>
+            <button class="btn btn-gold btn-sm" onclick="openAddModal()">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+              Add Item
+            </button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg class="search-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M17 17l-3.5-3.5"/></svg>
+            <input class="search-input" id="machinery-search" placeholder="Search items, departments, types…" oninput="filterMachinery()">
+          </div>
+          <select class="filter-sel" id="machinery-dept" onchange="filterMachinery()">
+            <option value="">All Departments</option>
+          </select>
+          <select class="filter-sel" id="machinery-month" onchange="filterMachinery()">
+            <option value="">All Months</option>
+            <option>January</option><option>February</option><option>March</option>
+            <option>April</option><option>May</option><option>June</option>
+            <option>July</option><option>August</option><option>September</option>
+            <option>October</option><option>November</option><option>December</option>
+          </select>
+          <select class="filter-sel" id="machinery-avail" onchange="filterMachinery()">
+            <option value="">All Availability</option>
+            <option value="available">✓ Available</option>
+            <option value="not">✗ Not Available</option>
+          </select>
+        </div>
+        <div id="machinery-table"></div>
       </div>
 
       <!-- ALL ITEMS -->
@@ -180,10 +330,6 @@
           </div>
           <select class="filter-sel" id="items-dept" onchange="filterItems()">
             <option value="">All Departments</option>
-          </select>
-          <select class="filter-sel" id="items-type" onchange="filterItems()">
-            <option value="">All Types</option>
-            <option>Office Supplies</option><option>Other Supplies</option><option>Machinery</option>
           </select>
           <select class="filter-sel" id="items-month" onchange="filterItems()">
             <option value="">All Months</option>
@@ -395,6 +541,28 @@
     </div><!-- /.imp-body -->
   </div><!-- /#importer-drawer -->
 </div><!-- /#importer-overlay -->
+
+<!-- ═══ CART DRAWER ═══ -->
+<div id="cart-overlay" onclick="cartOverlayClick(event)">
+  <div id="cart-drawer">
+    <div class="cart-hdr">
+      <div class="cart-hdr-icon">🛒</div>
+      <div class="cart-hdr-text">
+        <div class="cart-hdr-title">Purchase Order — Cart</div>
+        <div class="cart-hdr-sub">Review items before generating the purchase order slip</div>
+      </div>
+      <button class="cart-close-btn" onclick="closeCart()" aria-label="Close cart">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+      </button>
+    </div>
+    <div class="cart-body" id="cart-body">
+      <!-- populated by renderCart() -->
+    </div>
+    <div class="cart-footer" id="cart-footer">
+      <!-- populated by renderCart() -->
+    </div>
+  </div>
+</div>
 
 <!-- MODALS -->
 <div class="modal-overlay" id="modal-item" onclick="closeOverlay(event,'modal-item')">

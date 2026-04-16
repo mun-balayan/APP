@@ -84,7 +84,160 @@ const firebaseConfig = {
 
     const S = { page:'dashboard', dept:null, items:[], editId:null,
       itemSearch:'', itemDept:'', itemType:'', itemMonth:'', itemAvail:'',
+      officeSearch:'', officeDept:'', officeMonth:'', officeAvail:'',
+      otherSearch:'', otherDept:'', otherMonth:'', otherAvail:'',
+      machinerySearch:'', machineryDept:'', machineryMonth:'', machineryAvail:'',
       deptSearch:'', deptType:'', deptMonth:'', deptAvail:'' };
+
+    // ── Purchase Order Cart ──
+    let CART = []; // [{cartId, id, item, department, unit_of_measure, unit_price, qty}]
+    let _cartSeq = 0;
+
+    function cartTotal(){ return CART.reduce((s,c)=>s+(parseFloat(c.unit_price||0)*c.qty),0); }
+
+    function updateCartBadge(){
+      const badge = document.getElementById('cart-badge');
+      const btn   = document.getElementById('btn-purchase-top');
+      if(!badge || !btn) return;
+      const n = CART.reduce((s,c)=>s+c.qty,0);
+      if(n > 0){
+        badge.textContent = n;
+        badge.style.display = '';
+        btn.classList.add('has-items');
+      } else {
+        badge.style.display = 'none';
+        btn.classList.remove('has-items');
+      }
+    }
+
+    window.addToCart = function(id){
+      const item = S.items.find(x=>x.id===id);
+      if(!item) return;
+      const existing = CART.find(c=>c.id===id);
+      if(existing){
+        existing.qty++;
+        toast(`${item.item||'Item'} qty updated (×${existing.qty})`, 'success');
+      } else {
+        CART.push({ cartId: ++_cartSeq, id, item: item.item||'—',
+          department: item.department||'—', unit_of_measure: item.unit_of_measure||'—',
+          unit_price: parseFloat(item.unit_price||0), qty: 1 });
+        toast(`Added to cart: ${item.item||'Item'}`, 'success');
+      }
+      updateCartBadge();
+    };
+
+    window.removeFromCart = function(cartId){
+      CART = CART.filter(c=>c.cartId!==cartId);
+      updateCartBadge();
+      renderCart();
+    };
+
+    window.changeCartQty = function(cartId, delta){
+      const c = CART.find(x=>x.cartId===cartId);
+      if(!c) return;
+      c.qty = Math.max(1, c.qty + delta);
+      updateCartBadge();
+      renderCart();
+    };
+
+    window.setCartQty = function(cartId, val){
+      const c = CART.find(x=>x.cartId===cartId);
+      if(!c) return;
+      const n = parseInt(val)||1;
+      c.qty = Math.max(1, n);
+      updateCartBadge();
+      // no full re-render to avoid focus loss
+    };
+
+    function renderCart(){
+      const body   = document.getElementById('cart-body');
+      const footer = document.getElementById('cart-footer');
+      if(!body || !footer) return;
+
+      if(!CART.length){
+        body.innerHTML = `<div class="cart-empty">
+          <div class="cart-empty-icon">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3h1.5l2.5 9h8l2-6H6"/><circle cx="9" cy="17" r="1.2"/><circle cx="15" cy="17" r="1.2"/>
+            </svg>
+          </div>
+          <div class="cart-empty-text">Your cart is empty.</div>
+          <div class="cart-empty-sub">Click the <strong>Purchase</strong> button on any item to add it here.</div>
+        </div>`;
+        footer.innerHTML = '';
+        return;
+      }
+
+      const fmtAmt = n => '₱'+n.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+      body.innerHTML = `
+        <table class="cart-table">
+          <thead><tr>
+            <th class="ct-item">Item</th>
+            <th class="ct-dept">Dept</th>
+            <th class="ct-unit">Unit</th>
+            <th class="ct-price">Unit Price</th>
+            <th class="ct-qty">Qty</th>
+            <th class="ct-total">Total</th>
+            <th class="ct-act"></th>
+          </tr></thead>
+          <tbody>
+            ${CART.map(c=>{
+              const lineTotal = c.unit_price * c.qty;
+              return `<tr>
+                <td class="ct-item-val">${c.item}</td>
+                <td class="ct-dept-val">${c.department}</td>
+                <td class="ct-unit-val">${c.unit_of_measure}</td>
+                <td class="ct-price-val">${fmtAmt(c.unit_price)}</td>
+                <td class="ct-qty-val">
+                  <div class="cart-qty-ctrl">
+                    <button class="cart-qty-btn" onclick="changeCartQty(${c.cartId},-1)">−</button>
+                    <input class="cart-qty-input" type="number" min="1" value="${c.qty}"
+                      onchange="setCartQty(${c.cartId},this.value)"
+                      onblur="setCartQty(${c.cartId},this.value)">
+                    <button class="cart-qty-btn" onclick="changeCartQty(${c.cartId},1)">+</button>
+                  </div>
+                </td>
+                <td class="ct-total-val">${fmtAmt(lineTotal)}</td>
+                <td class="ct-act-val">
+                  <button class="cart-remove-btn" onclick="removeFromCart(${c.cartId})" title="Remove">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+                  </button>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`;
+
+      const grand = cartTotal();
+      footer.innerHTML = `
+        <div class="cart-total-row">
+          <div class="cart-total-label">Grand Total</div>
+          <div class="cart-total-amt">${fmtAmt(grand)}</div>
+        </div>
+        <div class="cart-total-meta">${CART.length} item type${CART.length!==1?'s':''} · ${CART.reduce((s,c)=>s+c.qty,0)} unit${CART.reduce((s,c)=>s+c.qty,0)!==1?'s':''}</div>
+        <div class="cart-actions">
+          <button class="btn btn-outline btn-sm cart-clear-btn" onclick="CART=[];updateCartBadge();renderCart()">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6h12M8 6V4h4v2M5 6l1 11h8l1-11"/></svg>
+            Clear Cart
+          </button>
+          <button class="btn btn-gold cart-checkout-btn" onclick="generatePR()">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>
+            Generate Purchase Request
+          </button>
+        </div>`;
+    }
+
+    window.openCart = function(){
+      renderCart();
+      document.getElementById('cart-overlay').classList.add('open');
+    };
+    window.closeCart = function(){
+      document.getElementById('cart-overlay').classList.remove('open');
+    };
+    window.cartOverlayClick = function(e){
+      if(e.target.id==='cart-overlay') closeCart();
+    };
 
     const col      = () => collection(db,'procurement_items');
     const deptCol  = () => collection(db,'app_departments');
@@ -128,12 +281,15 @@ const firebaseConfig = {
 
     function updateFilterDepts(){
       const deptOpts = DEPTS.map(d=>`<option>${d}</option>`).join('');
-      const el = document.getElementById('items-dept');
-      if(el){
-        const cur = el.value;
-        el.innerHTML = `<option value="">All Departments</option>${deptOpts}`;
-        el.value = cur;
-      }
+      const ids = ['items-dept', 'office-dept', 'other-dept', 'machinery-dept'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(el){
+          const cur = el.value;
+          el.innerHTML = `<option value="">All Departments</option>${deptOpts}`;
+          el.value = cur;
+        }
+      });
     }
 
     // ── Department Management ──
@@ -527,7 +683,7 @@ const firebaseConfig = {
     setInterval(updateTime,1000); updateTime();
 
     // ── Navigation ──
-    function switchPage(pg){ S.page=pg; S.dept=null; activatePage(pg); if(pg==='dashboard') loadDashboard(); else if(pg==='items') loadItems(); else if(pg==='catalog') loadCatalogPage(); }
+    function switchPage(pg){ S.page=pg; S.dept=null; activatePage(pg); if(pg==='dashboard') loadDashboard(); else if(pg==='items') loadItems(); else if(pg==='office') loadOffice(); else if(pg==='other') loadOther(); else if(pg==='machinery') loadMachinery(); else if(pg==='catalog') loadCatalogPage(); }
     window.switchPage=switchPage;
 
     function switchDept(dept){
@@ -645,7 +801,12 @@ const firebaseConfig = {
     }
 
     function updateBadges(){
-      document.getElementById('badge-all').textContent=S.items.length;
+      const officeCount = S.items.filter(i => normalizeType(i.type) === 'Office Supplies').length;
+      const otherCount = S.items.filter(i => normalizeType(i.type) === 'Other Supplies').length;
+      const machineryCount = S.items.filter(i => normalizeType(i.type) === 'Machinery').length;
+      document.getElementById('badge-office').textContent = officeCount;
+      document.getElementById('badge-other').textContent = otherCount;
+      document.getElementById('badge-machinery').textContent = machineryCount;
       DEPTS.forEach(d=>{
         const c=S.items.filter(i=>i.department===d).length;
         const el=document.getElementById(`badge-${d}`); if(el) el.textContent=c;
@@ -664,7 +825,6 @@ const firebaseConfig = {
       const q=S.itemSearch.toLowerCase();
       if(q) list=list.filter(i=>[i.item,i.department,i.type,i.month,i.unit_of_measure].join(' ').toLowerCase().includes(q));
       if(S.itemDept)  list=list.filter(i=>i.department===S.itemDept);
-      if(S.itemType)  list=list.filter(i=>normalizeType(i.type)===S.itemType);
       if(S.itemMonth){ const mk={January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'}; list=list.filter(i=>parseFloat(i[mk[S.itemMonth]]||0)>0); }
       if(S.itemAvail==='not')       list=list.filter(i=>(i.availability||'').toLowerCase().includes('not'));
       else if(S.itemAvail==='available') list=list.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
@@ -673,7 +833,6 @@ const firebaseConfig = {
     function filterItems(){
       S.itemSearch=(document.getElementById('items-search').value||'').toLowerCase();
       S.itemDept=document.getElementById('items-dept').value;
-      S.itemType=document.getElementById('items-type').value;
       S.itemMonth=document.getElementById('items-month').value;
       S.itemAvail=document.getElementById('items-avail').value;
       const list=filteredItems();
@@ -681,6 +840,87 @@ const firebaseConfig = {
       renderTable(list,'items-table',true);
     }
     window.filterItems=filterItems;
+
+    // ── Office Supplies page ──
+    async function loadOffice(){
+      document.getElementById('office-table').innerHTML='<div class="loading"><div class="loading-spinner"></div><br>Loading…</div>';
+      if(!S.items.length){ try { S.items=await getAll(); } catch(e){ return; } }
+      updateBadges(); filterOffice();
+    }
+    function filteredOffice(){
+      let list=S.items.filter(i=>normalizeType(i.type)==='Office Supplies');
+      const q=S.officeSearch.toLowerCase();
+      if(q) list=list.filter(i=>[i.item,i.department,i.month,i.unit_of_measure].join(' ').toLowerCase().includes(q));
+      if(S.officeDept)  list=list.filter(i=>i.department===S.officeDept);
+      if(S.officeMonth){ const mk={January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'}; list=list.filter(i=>parseFloat(i[mk[S.officeMonth]]||0)>0); }
+      if(S.officeAvail==='not')       list=list.filter(i=>(i.availability||'').toLowerCase().includes('not'));
+      else if(S.officeAvail==='available') list=list.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
+      return list;
+    }
+    function filterOffice(){
+      S.officeSearch=(document.getElementById('office-search').value||'').toLowerCase();
+      S.officeDept=document.getElementById('office-dept').value;
+      S.officeMonth=document.getElementById('office-month').value;
+      S.officeAvail=document.getElementById('office-avail').value;
+      const list=filteredOffice();
+      document.getElementById('office-count').textContent=`${list.length} record${list.length!==1?'s':''}`;
+      renderTable(list,'office-table',true);
+    }
+    window.filterOffice=filterOffice;
+
+    // ── Other Supplies page ──
+    async function loadOther(){
+      document.getElementById('other-table').innerHTML='<div class="loading"><div class="loading-spinner"></div><br>Loading…</div>';
+      if(!S.items.length){ try { S.items=await getAll(); } catch(e){ return; } }
+      updateBadges(); filterOther();
+    }
+    function filteredOther(){
+      let list=S.items.filter(i=>normalizeType(i.type)==='Other Supplies');
+      const q=S.otherSearch.toLowerCase();
+      if(q) list=list.filter(i=>[i.item,i.department,i.month,i.unit_of_measure].join(' ').toLowerCase().includes(q));
+      if(S.otherDept)  list=list.filter(i=>i.department===S.otherDept);
+      if(S.otherMonth){ const mk={January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'}; list=list.filter(i=>parseFloat(i[mk[S.otherMonth]]||0)>0); }
+      if(S.otherAvail==='not')       list=list.filter(i=>(i.availability||'').toLowerCase().includes('not'));
+      else if(S.otherAvail==='available') list=list.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
+      return list;
+    }
+    function filterOther(){
+      S.otherSearch=(document.getElementById('other-search').value||'').toLowerCase();
+      S.otherDept=document.getElementById('other-dept').value;
+      S.otherMonth=document.getElementById('other-month').value;
+      S.otherAvail=document.getElementById('other-avail').value;
+      const list=filteredOther();
+      document.getElementById('other-count').textContent=`${list.length} record${list.length!==1?'s':''}`;
+      renderTable(list,'other-table',true);
+    }
+    window.filterOther=filterOther;
+
+    // ── Machinery page ──
+    async function loadMachinery(){
+      document.getElementById('machinery-table').innerHTML='<div class="loading"><div class="loading-spinner"></div><br>Loading…</div>';
+      if(!S.items.length){ try { S.items=await getAll(); } catch(e){ return; } }
+      updateBadges(); filterMachinery();
+    }
+    function filteredMachinery(){
+      let list=S.items.filter(i=>normalizeType(i.type)==='Machinery');
+      const q=S.machinerySearch.toLowerCase();
+      if(q) list=list.filter(i=>[i.item,i.department,i.month,i.unit_of_measure].join(' ').toLowerCase().includes(q));
+      if(S.machineryDept)  list=list.filter(i=>i.department===S.machineryDept);
+      if(S.machineryMonth){ const mk={January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'}; list=list.filter(i=>parseFloat(i[mk[S.machineryMonth]]||0)>0); }
+      if(S.machineryAvail==='not')       list=list.filter(i=>(i.availability||'').toLowerCase().includes('not'));
+      else if(S.machineryAvail==='available') list=list.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
+      return list;
+    }
+    function filterMachinery(){
+      S.machinerySearch=(document.getElementById('machinery-search').value||'').toLowerCase();
+      S.machineryDept=document.getElementById('machinery-dept').value;
+      S.machineryMonth=document.getElementById('machinery-month').value;
+      S.machineryAvail=document.getElementById('machinery-avail').value;
+      const list=filteredMachinery();
+      document.getElementById('machinery-count').textContent=`${list.length} record${list.length!==1?'s':''}`;
+      renderTable(list,'machinery-table',true);
+    }
+    window.filterMachinery=filterMachinery;
 
     // ── Dept page ──
     function filterDeptPage(){
@@ -737,6 +977,14 @@ const firebaseConfig = {
       return `<span class="badge badge-gray">${nt||'—'}</span>`;
     }
 
+    function getItemMonth(i){
+      if(i.month) return i.month;
+      for(const [month, key] of Object.entries(MONTH_KEYS)){
+        if(parseFloat(i[key] || 0) > 0) return month;
+      }
+      return '—';
+    }
+
     function renderTable(list,tableId,showDept){
       const el=document.getElementById(tableId);
       if(!list.length){
@@ -747,18 +995,23 @@ const firebaseConfig = {
       el.innerHTML=`<div class="table-wrap"><table><thead><tr>
         <th>Item</th>${dCol}<th>Type</th>
         <th>Month</th><th>Unit</th>
-        <th>Unit Price</th><th>Qty</th><th>Total</th><th>Status</th>
+        <th>Unit Price</th><th>Qty</th><th>Total</th><th>Status</th><th></th>
       </tr></thead><tbody>
         ${list.map(i=>`<tr onclick="showItemModal('${i.id}')">
           <td class="td-item">${i.item||'—'}</td>
           ${showDept?`<td class="td-muted">${i.department||'—'}</td>`:''}
           <td>${tBadge(i.type)}</td>
-          <td class="td-muted">${i.month||'—'}</td>
+          <td class="td-muted">${getItemMonth(i)}</td>
           <td class="td-muted">${i.unit_of_measure||'—'}</td>
           <td class="td-mono">₱${parseFloat(i.unit_price||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
           <td class="td-muted">${i.quantity||'—'}</td>
           <td class="td-amount">₱${parseFloat(i.total_amount||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
           <td>${avBadge(i.availability)}</td>
+          <td onclick="event.stopPropagation()">
+            <button class="cat-add-btn purchase-row-btn" onclick="addToCart('${i.id}')" title="Add to purchase cart">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h1.5l2.5 9h8l2-6H6"/><circle cx="9" cy="17" r="1.2"/><circle cx="15" cy="17" r="1.2"/></svg>
+            </button>
+          </td>
         </tr>`).join('')}
       </tbody></table></div>`;
     }
@@ -771,7 +1024,7 @@ const firebaseConfig = {
         <div class="detail-section">
           <div class="detail-section-title"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>Item Details</div>
           ${dr('Item Name',i.item)}${dr('Department',i.department)}${dr('Supply Category',normalizeType(i.type))}
-          ${dr('Unit of Measure',i.unit_of_measure)}${dr('Month',i.month)}
+          ${dr('Unit of Measure',i.unit_of_measure)}${dr('Month',getItemMonth(i))}
         </div>
         <div class="detail-section">
           <div class="detail-section-title"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="16" height="10" rx="1.5"/><circle cx="10" cy="10" r="2.5"/></svg>Pricing & Status</div>
@@ -945,11 +1198,27 @@ const firebaseConfig = {
           await updateRec(S.editId, {...data, department: checkedDepts[0]});
           toast('Updated successfully!','success');
         } else {
-          // Add: one record per checked department
-          await Promise.all(checkedDepts.map(dept => addRec({...data, department: dept})));
-          toast(checkedDepts.length > 1
-            ? `Added to ${checkedDepts.length} departments!`
-            : 'Added successfully!', 'success');
+          // Add: one record per checked department per month with qty >0
+          const records = [];
+          checkedDepts.forEach(dept => {
+            Object.entries(MONTH_KEYS).forEach(([month, key]) => {
+              const qty = parseFloat(data[key]) || 0;
+              if(qty > 0){
+                records.push({
+                  ...data,
+                  department: dept,
+                  month: month,
+                  quantity: qty,
+                  total_amount: (up * qty).toFixed(2),
+                  [key]: qty,
+                  // Set other months to null
+                  ...Object.fromEntries(Object.entries(MONTH_KEYS).map(([m,k])=>[k, m===month ? qty : null]))
+                });
+              }
+            });
+          });
+          await Promise.all(records.map(rec => addRec(rec)));
+          toast(`Added ${records.length} item${records.length !== 1 ? 's' : ''} successfully!`, 'success');
         }
         closeModal('modal-form');
       }catch(e){
@@ -1079,7 +1348,7 @@ const firebaseConfig = {
       const PRINT_CSS = `
         *{box-sizing:border-box;margin:0;padding:0;}
         body{font-family:'Times New Roman',serif;font-size:8.5px;color:#000;background:#fff;}
-        .page{padding:8mm 10mm 12mm;}
+        .page{padding:4mm 4mm 5mm;}
         /* ── TITLE BLOCK ── */
         .form-header{margin-bottom:5px;}
         .form-header-meta{display:flex;justify-content:space-between;align-items:flex-start;font-size:8px;margin-bottom:3px;}
@@ -1124,10 +1393,9 @@ const firebaseConfig = {
         [contenteditable]:focus{background:rgba(255,220,0,.45);box-shadow:0 0 0 1.5px rgba(176,124,10,.55);}
         /* ── PRINT TOOLBAR ── */
         .print-toolbar{position:fixed;top:0;left:0;right:0;background:#1a3358;color:#fff;padding:9px 20px;display:flex;align-items:center;gap:12px;z-index:9999;font-family:sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.3);}
-        @page{size:legal landscape;margin:6mm;}
         @media print{
           .print-toolbar{display:none!important;}
-          .page{padding-top:8mm!important;}
+          .page{padding-top:4mm!important;}
           .cat-head{page-break-before:auto;}
           [contenteditable]:hover,[contenteditable]:focus{background:transparent!important;box-shadow:none!important;}
         }
@@ -1165,6 +1433,7 @@ const firebaseConfig = {
       const deptsJSON = JSON.stringify(DEPTS);
 
       const toolbar = `<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"><\/script>
+      <style id="pgStyle">@page{size:A4 landscape;margin:4mm;}<\/style>
       <style>
         .print-toolbar{position:fixed;top:0;left:0;right:0;background:#1a3358;color:#fff;padding:8px 18px;display:flex;align-items:center;gap:9px;z-index:9999;font-family:sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.3);}
         .pt-btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:6px;padding:7px 15px;font-size:12.5px;font-weight:700;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
@@ -1172,18 +1441,31 @@ const firebaseConfig = {
         .pt-btn-print{background:#fff;color:#1a3358;}
         .pt-btn-excel{background:#1d6f42;color:#fff;}
         .pt-btn-close{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.22)!important;font-weight:500;}
-        @media print{.print-toolbar{display:none!important;}.page{padding-top:8mm!important;}}
+        .pt-sel{background:#243f6a;color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:5px;padding:5px 8px;font-size:12px;cursor:pointer;}
+        .pt-sel option{background:#1a3358;color:#fff;}
+        @media print{.print-toolbar{display:none!important;}.page{padding-top:4mm!important;}}
       <\/style>
       <div class="print-toolbar">
         <button class="pt-btn pt-btn-print" onclick="window.print()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           Print
         </button>
-        <span style="font-size:11px;opacity:.5">Ctrl+P · Legal · Landscape</span>
+        <select class="pt-sel" id="pt-paper" onchange="setPaperSize(this.value)" title="Paper Size">
+          <option value="a4" selected>📄 A4</option>
+          <option value="legal">📄 Legal</option>
+        </select>
+        <span id="pt-paper-lbl" style="font-size:11px;opacity:.5">Ctrl+P · A4 · Landscape</span>
         <span style="font-size:11px;opacity:.65;background:rgba(255,220,0,.18);border:1px solid rgba(255,220,0,.4);border-radius:4px;padding:2px 8px;">✏️ Click any highlighted field to edit</span>
         <button class="pt-btn pt-btn-close" onclick="window.close()" style="margin-left:auto">✕ Close</button>
       </div>
       <div style="height:44px"></div>
+      <script>
+        function setPaperSize(val){
+          var s=document.getElementById('pgStyle');
+          s.textContent=val==='legal'?'@page{size:legal landscape;margin:4mm;}':'@page{size:A4 landscape;margin:4mm;}';
+          document.getElementById('pt-paper-lbl').textContent='Ctrl+P · '+(val==='legal'?'Legal':'A4')+' · Landscape';
+        }
+      <\/script>
       <script>
         const _ITEMS  = ${itemsJSON};
         const _DEPT   = ${deptJSON};
@@ -1550,8 +1832,8 @@ const firebaseConfig = {
       <\/script>`;
 
       return `<!DOCTYPE html><html><head><meta charset="UTF-8">
-        <title>APP-CSE 2026 — ${titleSuffix}</title>
-        <style>@page{size:legal landscape;margin:6mm;}</style>
+        <title>APP-CSE — ${titleSuffix}</title>
+        <style>@page{size:A4 landscape;margin:4mm;}</style>
         <style>${PRINT_CSS}</style>
       </head><body>
         ${toolbar}
@@ -1565,7 +1847,7 @@ const firebaseConfig = {
                 Plan Control No.: <span contenteditable="true" spellcheck="false" style="border-bottom:1px solid #000;min-width:80px;display:inline-block;">_________________</span> &nbsp;&nbsp; Page 1 of 1
               </div>
             </div>
-            <div class="form-title-main">Annual Procurement Plan for 2026</div>
+            <div class="form-title-main">Annual Procurement Plan for <span contenteditable="true" spellcheck="false" id="plan-year" style="border-bottom:1.5px solid #000;min-width:28px;display:inline-block;text-align:center;">2026</span></div>
             <div class="form-title-sub">For Common-Use Supplies and Equipment (APP-CSE)</div>
           </div>
           <div class="info-box">
@@ -1603,6 +1885,499 @@ const firebaseConfig = {
       </body></html>`;
     }
 
+    // ═══ PURCHASE REQUEST — GENERATE ═══
+    async function deductCartQuantities(){
+      if(!isOnline){ toast('Offline. Cannot update quantities.','error'); return false; }
+      try {
+        const updates = CART.map(c => {
+          const item = S.items.find(x => x.id === c.id);
+          if(!item) return null;
+          const currentQty = parseFloat(item.quantity || 0);
+          const newQty     = Math.max(0, currentQty - c.qty);
+          const patch = { quantity: newQty };
+          if(newQty <= 0) patch.availability = 'Not Available';
+
+          // Also deduct from monthly qty fields (Jan→Dec) so the edit modal
+          // reflects the updated quantity after a PR is generated.
+          let remaining = c.qty;
+          for(const key of Object.values(MONTH_KEYS)){
+            if(remaining <= 0) break;
+            const monthQty = parseFloat(item[key] || 0);
+            if(monthQty > 0){
+              const deduct = Math.min(remaining, monthQty);
+              patch[key] = Math.max(0, monthQty - deduct);
+              remaining -= deduct;
+            }
+          }
+
+          return updateDoc(doc(db,'procurement_items',c.id), patch);
+        }).filter(Boolean);
+        await Promise.all(updates);
+        return true;
+      } catch(e){ toast('Failed to update quantities: '+e.message,'error'); return false; }
+    }
+
+    function buildPRHTML(cartItems){
+      const fmtC = n => '₱'+n.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+      const today = new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+      const depts  = [...new Set(cartItems.map(c=>c.department).filter(Boolean))];
+      const deptLabel = depts.join(' / ') || '—';
+      const grandTotal = cartItems.reduce((s,c)=>s+(c.unit_price*c.qty),0);
+
+      const dataRows = cartItems.map((c,idx)=>{
+        const lineTotal = c.unit_price * c.qty;
+        return `<tr>
+          <td class="tc">${idx+1}</td>
+          <td class="tc">${c.qty}</td>
+          <td class="tc">${c.unit_of_measure||'—'}</td>
+          <td class="tl">${c.item||'—'}</td>
+          <td class="tr mono">${fmtC(c.unit_price)}</td>
+          <td class="tr mono">${fmtC(lineTotal)}</td>
+        </tr>`;
+      }).join('');
+
+      // Filler rows: enough to fill the page; height:1% distributes remaining space evenly
+      const fillerCount = Math.max(0, 36 - cartItems.length);
+      const fillerRows  = Array.from({length:fillerCount},(_,i)=>`<tr class="filler${i===fillerCount-1?' filler-last':''}"><td></td><td></td><td></td><td></td><td></td><td></td></tr>`).join('');
+
+      // ── @page margins: top 0.5in(13mm), sides 0.75in(19mm), bottom 0.75in(19mm) ──
+      // Usable A4: 172mm wide × 265mm tall | Legal: 172mm wide × 324mm tall
+      const PR_CSS = `
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:'Arial',sans-serif;font-size:11px;color:#000;background:#fff;}
+
+        /* ── PAGE SHELL ── */
+        .page{
+          padding:2mm;
+          width:172mm;
+          margin:0 auto;
+          min-height:var(--paper-h,261mm);
+          display:flex;
+          flex-direction:column;
+        }
+
+        /* ── DOUBLE BORDER (matches PDF: thick outer + thin inner + 3px gap) ── */
+        .pr-wrap{
+          border:2px solid #000;
+          padding:3px;
+          flex:1;
+          display:flex;
+          flex-direction:column;
+        }
+        .pr-inner{
+          border:1px solid #000;
+          flex:1;
+          display:flex;
+          flex-direction:column;
+        }
+
+        /* ── HEADER ── */
+        .pr-header{
+          text-align:center;
+          padding:12px 10px 10px;
+          border-bottom:1px solid #000;
+        }
+        .pr-form-title{
+          font-size:14px;
+          font-weight:700;
+          text-transform:uppercase;
+          letter-spacing:.8px;
+        }
+        .pr-lgu{
+          font-size:12.5px;
+          font-weight:700;
+          text-decoration:underline;
+          margin-top:8px;
+        }
+
+        /* ── META TABLE (3 rows × 3 cols, all separated by lines) ── */
+        .meta-table{width:100%;border-collapse:collapse;font-size:11px;}
+        .meta-table tr td{
+          padding:4px 8px;
+          border-bottom:1px solid #000;
+          vertical-align:middle;
+          line-height:1.55;
+        }
+        /* vertical dividers between meta columns */
+        .meta-table tr td:nth-child(1){width:40%;}
+        .meta-table tr td:nth-child(2){width:36%;border-left:1px solid #000;}
+        .meta-table tr td:nth-child(3){width:24%;border-left:1px solid #000;}
+        /* last meta row has no bottom border — items header provides the top line */
+        .meta-table tr:last-child td{border-bottom:none;}
+        .meta-lbl{white-space:nowrap;}
+        .meta-line{
+          display:inline-block;
+          border-bottom:1px solid #000;
+          min-width:72px;
+          vertical-align:bottom;
+        }
+
+        /* ── ITEMS TABLE ── */
+        .items-table-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+        .items-table{
+          width:100%;
+          border-collapse:collapse;
+          font-size:12px;
+          height:100%;
+          table-layout:fixed;
+        }
+
+        /* Header row: full top+bottom border, vertical dividers between columns,
+           no left on first / no right on last (pr-inner provides outer edges) */
+        .items-table thead th{
+          font-weight:700;
+          text-align:center;
+          padding:5px 4px;
+          font-size:12px;
+          line-height:1.3;
+          border-top:1px solid #000;
+          border-bottom:1px solid #000;
+          border-left:1px solid #000;
+          border-right:none;
+          background:#fff;
+        }
+        .items-table thead th:first-child{border-left:none;}
+        .items-table thead th:last-child{border-right:none;}
+
+        /* Body rows: vertical dividers only, no horizontal lines */
+        .items-table tbody td{
+          border-top:none;
+          border-bottom:none;
+          border-left:1px solid #000;
+          border-right:none;
+          padding:3px 6px;
+          vertical-align:middle;
+        }
+        .items-table tbody td:first-child{border-left:none;}
+
+        /* Filler rows share remaining height evenly */
+        .items-table .filler{height:1%;}
+        .items-table .filler td{padding:0;}
+
+        .tc{text-align:center;}
+        .tl{text-align:left;}
+        .tr{text-align:right;}
+        .mono{font-family:'Courier New',monospace;font-size:11px;}
+
+        /* ── PAGE NOTE (top + bottom border, "page 1 of 1" + grand total) ── */
+        .page-note{
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          padding:3px 8px;
+          font-size:11px;
+          border-top:1px solid #000;
+          border-bottom:1px solid #000;
+        }
+        .page-note-total{
+          font-weight:700;
+          text-align:right;
+          min-width:88px;
+          border-left:1px solid #000;
+          padding-left:8px;
+        }
+
+        /* ── PURPOSE + CHARGEABLE ── */
+        .field-row{
+          display:flex;
+          align-items:baseline;
+          gap:8px;
+          padding:5px 8px;
+          font-size:11px;
+          border-bottom:1px solid #000;
+        }
+        .field-lbl{white-space:nowrap;min-width:120px;}
+        .field-val{
+          flex:1;
+          border-bottom:1px solid #000;
+          min-height:15px;
+          padding-bottom:2px;
+        }
+        .field-center{flex:1;text-align:center;font-size:11px;}
+
+        /* ── SIGNATURE TABLE ──
+           5 rows × 4 cols.
+           Outer left/right edges: pr-inner provides them → no border on td:first-child left or td:last-child right.
+           Vertical separators: border-left on cols 2,3,4.
+           Horizontal separators: border-bottom on each row except last.
+           First row top: no border (chargeable field's border-bottom is the line above). */
+        .sig-table{width:100%;border-collapse:collapse;font-size:11px;}
+        .sig-table td{
+          padding:4px 8px;
+          vertical-align:top;
+          border-bottom:1px solid #000;
+          border-left:none;
+          border-right:none;
+          border-top:none;
+        }
+        /* Vertical separators between sig columns */
+        .sig-table td:nth-child(2){border-left:1px solid #000;}
+        .sig-table td:nth-child(3){border-left:1px solid #000;}
+        .sig-table td:nth-child(4){border-left:1px solid #000;}
+        /* Last row: no bottom border (pr-inner provides it) */
+        .sig-table tr:last-child td{border-bottom:none;}
+        .sig-lbl{white-space:nowrap;width:82px;font-size:11px;}
+        .sig-hdr{text-align:center;font-weight:700;}
+        .sig-name{font-weight:700;text-transform:uppercase;text-align:center;font-size:11px;}
+        .sig-role{text-align:center;font-size:10.5px;}
+        .sig-space{height:34px;}
+
+        /* ── EDITABLE FIELDS ── */
+        [contenteditable]{cursor:text;outline:none;}
+        [contenteditable]:hover{background:rgba(255,220,0,.28);}
+        [contenteditable]:focus{background:rgba(255,220,0,.45);box-shadow:0 0 0 1.5px rgba(176,124,10,.55);}
+
+        /* ── PRINT TOOLBAR ── */
+        .print-toolbar{position:fixed;top:0;left:0;right:0;background:#1a3358;color:#fff;
+          padding:7px 18px;display:flex;align-items:center;gap:9px;z-index:9999;
+          font-family:sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+        .pt-btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:6px;
+          padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;}
+        .pt-btn:hover{opacity:.85;}
+        .pt-btn-print{background:#fff;color:#1a3358;}
+        .pt-btn-close{background:rgba(255,255,255,.12);color:#fff;
+          border:1px solid rgba(255,255,255,.22);font-weight:500;}
+        .pt-spacer{flex:1;}
+        .pt-info{font-size:11px;opacity:.6;}
+        .pt-sel{background:#243f6a;color:#fff;border:1px solid rgba(255,255,255,.35);
+          border-radius:5px;padding:5px 8px;font-size:12px;cursor:pointer;}
+        .pt-sel option{background:#1a3358;color:#fff;}
+
+        @media print{
+          .print-toolbar{display:none!important;}
+          .page{padding:2mm!important;margin-top:0!important;width:100%!important;}
+          [contenteditable]:hover,[contenteditable]:focus{
+            background:transparent!important;box-shadow:none!important;}
+        }
+      `;
+
+      const toolbar = `
+        <style id="pgStylePR">@page{size:A4 portrait;margin:13mm 19mm 19mm 19mm;}<\/style>
+        <script>
+          function setPaperSizePR(val){
+            var s=document.getElementById('pgStylePR');
+            var isLegal=val==='legal';
+            s.textContent=isLegal
+              ?'@page{size:legal portrait;margin:13mm 19mm 19mm 19mm;}'
+              :'@page{size:A4 portrait;margin:13mm 19mm 19mm 19mm;}';
+            document.getElementById('pt-pr-lbl').textContent=
+              'Ctrl+P \xB7 '+(isLegal?'Legal':'A4')+' \xB7 Portrait';
+            // usable height = paper − top(13mm) − bottom(19mm)
+            document.documentElement.style.setProperty(
+              '--paper-h', isLegal?'324mm':'265mm');
+          }
+        <\/script>
+        <div class="print-toolbar">
+          <button class="pt-btn pt-btn-print" onclick="window.print()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.2" stroke-linecap="round">
+              <polyline points="6 9 6 2 18 2 18 9"/>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            Print
+          </button>
+          <select class="pt-sel" id="pt-pr-paper" onchange="setPaperSizePR(this.value)">
+            <option value="a4" selected>📄 A4</option>
+            <option value="legal">📄 Legal</option>
+          </select>
+          <span id="pt-pr-lbl" class="pt-info">Ctrl+P · A4 · Portrait</span>
+          <div class="pt-spacer"></div>
+          <span class="pt-info">💡 Click any highlighted field to edit before printing</span>
+          <button class="pt-btn pt-btn-close" onclick="window.close()">✕ Close</button>
+        </div>`;
+
+      return `<!DOCTYPE html><html><head>
+        <meta charset="UTF-8">
+        <title>Purchase Request — ${deptLabel}</title>
+        <style>${PR_CSS}</style>
+      </head><body>
+        ${toolbar}
+        <div class="page" style="margin-top:46px;">
+          <div class="pr-wrap">
+            <div class="pr-inner">
+
+              <!-- ① HEADER -->
+              <div class="pr-header">
+                <div class="pr-form-title">PURCHASE REQUEST</div>
+                <div class="pr-lgu">Municipality of Balayan</div>
+              </div>
+
+              <!-- ② META: 3 rows × 3 cols -->
+              <table class="meta-table">
+                <tr>
+                  <td>
+                    <span class="meta-lbl">Department: </span>
+                    <span contenteditable="true" spellcheck="false"
+                      class="meta-line" style="min-width:95px;">${deptLabel}</span>
+                  </td>
+                  <td>
+                    <span class="meta-lbl">PR No.: EEA-<span
+                      contenteditable="true" spellcheck="false"
+                      style="border-bottom:1px solid #000;min-width:26px;
+                             display:inline-block;text-align:center;">2026</span>-<span
+                      contenteditable="true" spellcheck="false"
+                      class="meta-line" style="min-width:52px;">&nbsp;</span></span>
+                  </td>
+                  <td>
+                    <span class="meta-lbl">Date: </span>
+                    <span contenteditable="true" spellcheck="false"
+                      class="meta-line" style="min-width:60px;">${today}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="meta-lbl">Section: </span>
+                    <span contenteditable="true" spellcheck="false"
+                      class="meta-line" style="min-width:100px;">&nbsp;</span>
+                  </td>
+                  <td>
+                    <span class="meta-lbl">SAI No: </span>
+                    <span contenteditable="true" spellcheck="false"
+                      class="meta-line" style="min-width:75px;">&nbsp;</span>
+                  </td>
+                  <td>
+                    <span class="meta-lbl">Date: </span>
+                    <span contenteditable="true" spellcheck="false"
+                      class="meta-line" style="min-width:60px;">&nbsp;</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                  <td>
+                    <span class="meta-lbl">OBR No: </span>
+                    <span contenteditable="true" spellcheck="false"
+                      class="meta-line" style="min-width:75px;">&nbsp;</span>
+                  </td>
+                  <td>
+                    <span class="meta-lbl">Date: </span>
+                    <span contenteditable="true" spellcheck="false"
+                      class="meta-line" style="min-width:60px;">&nbsp;</span>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- ③ ITEMS TABLE (vertical dividers only in body) -->
+              <div class="items-table-wrap">
+                <table class="items-table">
+                  <thead>
+                    <tr>
+                      <th style="width:38px">Item<br>No.</th>
+                      <th style="width:56px">Quantity</th>
+                      <th style="width:66px">Unit of<br>Issue</th>
+                      <th>Item Description</th>
+                      <th style="width:92px">Estimated<br>Unit Cost</th>
+                      <th style="width:94px">Estimated<br>Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${dataRows}
+                    ${fillerRows}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- ④ PAGE NOTE + GRAND TOTAL -->
+              <div class="page-note">
+                <span>&nbsp;</span>
+                <span>page 1 of 1</span>
+                <span class="page-note-total">${fmtC(grandTotal)}</span>
+              </div>
+
+              <!-- ⑤ PURPOSE -->
+              <div class="field-row">
+                <span class="field-lbl">Purpose:</span>
+                <span contenteditable="true" spellcheck="false" class="field-val">&nbsp;</span>
+              </div>
+
+              <!-- ⑥ CHARGEABLE AGAINST -->
+              <div class="field-row">
+                <span class="field-lbl">Chargeable against:</span>
+                <span class="field-center">see attached breakdown</span>
+              </div>
+
+              <!-- ⑦ SIGNATURE BLOCK: 5 rows × 4 cols -->
+              <table class="sig-table">
+                <tr>
+                  <td class="sig-lbl">&nbsp;</td>
+                  <td class="sig-hdr">Requested by:</td>
+                  <td class="sig-hdr">Appropriation</td>
+                  <td class="sig-hdr">Approved by:</td>
+                </tr>
+                <tr>
+                  <td class="sig-lbl">Signature:</td>
+                  <td><div class="sig-space"></div></td>
+                  <td><div class="sig-space"></div></td>
+                  <td><div class="sig-space"></div></td>
+                </tr>
+                <tr>
+                  <td class="sig-lbl">Printed Name:</td>
+                  <td class="sig-name">
+                    <div contenteditable="true" spellcheck="false">MARICORA M. MANIÑGAT</div>
+                  </td>
+                  <td class="sig-name">
+                    <div contenteditable="true" spellcheck="false">NORMANDO M. BAGAY</div>
+                  </td>
+                  <td class="sig-name">
+                    <div contenteditable="true" spellcheck="false">ELISA E. ABAD</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="sig-lbl">&nbsp;</td>
+                  <td class="sig-role">
+                    <div contenteditable="true" spellcheck="false">Acting Department Head-GSO</div>
+                  </td>
+                  <td class="sig-role">
+                    <div contenteditable="true" spellcheck="false">Acting Department Head<br>Municipal Budget Office</div>
+                  </td>
+                  <td class="sig-role">
+                    <div contenteditable="true" spellcheck="false">Municipal Mayor</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="sig-lbl">Designation:</td>
+                  <td><div style="height:16px;"></div></td>
+                  <td><div style="height:16px;"></div></td>
+                  <td><div style="height:16px;"></div></td>
+                </tr>
+              </table>
+
+            </div><!-- /.pr-inner -->
+          </div><!-- /.pr-wrap -->
+        </div>
+      </body></html>`;
+    }
+
+    window.generatePR = async function(){
+      if(!CART.length){ toast('Cart is empty','error'); return; }
+
+      // Validate against available quantities
+      const overQty = CART.filter(c => {
+        const item = S.items.find(x => x.id === c.id);
+        if(!item) return false;
+        return c.qty > parseFloat(item.quantity || 0);
+      });
+      if(overQty.length){
+        toast(`Requested qty exceeds available stock for: ${overQty.map(c=>c.item).join(', ')}`, 'error');
+        return;
+      }
+
+      // Open print window first
+      const html = buildPRHTML(CART);
+      const win  = window.open('','_blank','width=900,height=1000');
+      win.document.write(html);
+      win.document.close();
+
+      // Deduct quantities in Firestore
+      const ok = await deductCartQuantities();
+      if(ok){
+        toast(`PR generated! Quantities updated for ${CART.length} item(s).`, 'success');
+        CART = [];
+        updateCartBadge();
+        renderCart();
+      }
+    };
+
     // ═══ PRINT — DEPT ═══
     function printDept(){
       const dept=S.dept; if(!dept){ toast('No department selected','error'); return; }
@@ -1622,6 +2397,30 @@ const firebaseConfig = {
       win.document.write(html); win.document.close();
     }
     window.printAll=printAll;
+
+    function printAllOffice(){
+      const items=S.items.filter(i=>normalizeType(i.type)==='Office Supplies'); if(!items.length){ toast('No items to print','error'); return; }
+      const html=buildPrintHTML(items, 'Municipality of Balayan — Office Supplies', 'Office Supplies');
+      const win=window.open('','_blank','width=1400,height=900');
+      win.document.write(html); win.document.close();
+    }
+    window.printAllOffice=printAllOffice;
+
+    function printAllOther(){
+      const items=S.items.filter(i=>normalizeType(i.type)==='Other Supplies'); if(!items.length){ toast('No items to print','error'); return; }
+      const html=buildPrintHTML(items, 'Municipality of Balayan — Other Supplies', 'Other Supplies');
+      const win=window.open('','_blank','width=1400,height=900');
+      win.document.write(html); win.document.close();
+    }
+    window.printAllOther=printAllOther;
+
+    function printAllMachinery(){
+      const items=S.items.filter(i=>normalizeType(i.type)==='Machinery'); if(!items.length){ toast('No items to print','error'); return; }
+      const html=buildPrintHTML(items, 'Municipality of Balayan — Machinery', 'Machinery');
+      const win=window.open('','_blank','width=1400,height=900');
+      win.document.write(html); win.document.close();
+    }
+    window.printAllMachinery=printAllMachinery;
 
     // ── Real-time listener for items ──
     // onSnapshot is the single source of truth for S.items after init.
