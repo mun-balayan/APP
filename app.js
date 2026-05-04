@@ -24,8 +24,10 @@ window.closeOverlay = closeOverlay;
 // ── Firebase API injected by inline module in index.html via window.__fb_api ──
 // This file is a regular (non-module) script so it works from file:// protocol.
 function __startApp() {
-  const { initializeApp, getFirestore, collection, getDocs, onSnapshot,
-          addDoc, updateDoc, deleteDoc, doc, writeBatch } = window.__fb_api;
+  const { initializeApp, getFirestore, collection, getDocs, getDoc, setDoc, onSnapshot,
+          addDoc, updateDoc, deleteDoc, doc, writeBatch, serverTimestamp,
+          getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail,
+          deleteUser, EmailAuthProvider, reauthenticateWithCredential } = window.__fb_api;
 
 const firebaseConfig = {
   apiKey:     "AIzaSyCmoO3iEpR1R4GzHK2Z21YfCVV9_VRoMJo",
@@ -36,8 +38,9 @@ const firebaseConfig = {
 
 (function initApp(){
   try {
-    const app = initializeApp(firebaseConfig, 'app-cse');
-    const db  = getFirestore(app);
+    const app  = initializeApp(firebaseConfig, 'app-cse');
+    const db   = getFirestore(app);
+    const auth = getAuth(app);
 
     // Expose to importer (non-module script)
     window._fb = { db, collection, getDocs, writeBatch, doc };
@@ -2578,62 +2581,533 @@ const firebaseConfig = {
       });
     }
 
-    // ── Login gate ──
-    const ACCOUNTS = { admin: 'admin' };
-    const SESSION_KEY = 'app-cse-auth';
+    // ── Login / Sign up — Firebase Auth + Firestore `users/{uid}` profiles ──
+    /** Set to false if you want new accounts disabled until `approved: true` is set in Firestore for that user. */
+    const NEW_USERS_APPROVED_BY_DEFAULT = true;
+
+    const userDocRef = uid => doc(db, 'users', uid);
+
+    /** Maps normalized contact email → real Firebase Auth email (username accounts use synthetic @ host). */
+    const loginLookupRef = normalizedEmail =>
+      doc(db, 'login_lookup', (normalizedEmail||'').trim().toLowerCase());
+
+    async function writeLoginLookup(contactEmail, authEmail){
+      const ce = (contactEmail||'').trim().toLowerCase();
+      const ae = (authEmail||'').trim().toLowerCase();
+      if(!ce || !ae) return;
+      await setDoc(loginLookupRef(ce), { authEmail: ae, updatedAt: serverTimestamp() }, { merge: true });
+    }
+
+    /** Lets users sign in with optional contact email after one username-based login (backfill). */
+    async function ensureLoginLookupFromProfile(user){
+      try {
+        const snap = await getDoc(userDocRef(user.uid));
+        if(!snap.exists()) return;
+        const d = snap.data();
+        const ce = (d.contactEmail||'').trim().toLowerCase();
+        const ae = (user.email||'').trim().toLowerCase();
+        if(ce && ae) await writeLoginLookup(ce, ae);
+      } catch(err){ console.warn('login_lookup sync:', err); }
+    }
+
+    function showLoginError(msg){
+      const err = document.getElementById('login-err');
+      if(!err) return;
+      err.textContent = msg;
+      err.style.display = 'block';
+    }
+    function hideLoginError(){
+      const err = document.getElementById('login-err');
+      if(err){ err.style.display='none'; err.textContent=''; }
+    }
+    function showSignupError(msg){
+      const err = document.getElementById('signup-err');
+      if(!err) return;
+      err.textContent = msg;
+      err.style.display = 'block';
+    }
+    function hideSignupError(){
+      const err = document.getElementById('signup-err');
+      if(err){ err.style.display='none'; err.textContent=''; }
+    }
+
+    /** Firebase Auth requires an email; plain usernames map here (must stay stable). */
+    const AUTH_USERNAME_EMAIL_HOST = 'app-cse-login.invalid';
+
+    /**
+     * @returns {{ok:true, authEmail:string, isEmail:boolean, raw:string}|{ok:false, code:string}}
+     */
+    function resolveAuthEmail(rawInput){
+      const raw = (rawInput||'').trim();
+      if(!raw) return { ok:false, code:'empty' };
+      if(raw.includes('@')){
+        const authEmail = raw.toLowerCase().replace(/\s+/g,'');
+        /* Allow common forms including subdomain TLDs (e.g. user.name@sub.office.gov.ph) */
+        if(!/^[^\s@]+@[^\s@]+(\.[^\s@]+)+$/.test(authEmail))
+          return { ok:false, code:'bad_email' };
+        return { ok:true, authEmail, isEmail:true, raw };
+      }
+      let local = raw.toLowerCase().replace(/[^a-z0-9._-]/g,'');
+      if(local.length < 2)
+        return { ok:false, code:'username_short' };
+      if(local.length > 64) local = local.slice(0, 64);
+      return { ok:true, authEmail: `${local}@${AUTH_USERNAME_EMAIL_HOST}`, isEmail:false, raw };
+    }
+
+    function resolveAuthEmailError(code){
+      const map = {
+        empty: 'Please enter your username or email.',
+        bad_email: 'That email does not look valid.',
+        username_short: 'Username must be at least 2 letters or numbers (you can use . _ -).',
+      };
+      return map[code] || 'Please check your username or email.';
+    }
+
+    /** Sign-up username only (no @); maps to same synthetic Auth email as login. */
+    function resolveSignupUsername(rawInput){
+      const raw = (rawInput||'').trim();
+      if(!raw) return { ok:false, code:'empty_username' };
+      if(raw.includes('@'))
+        return { ok:false, code:'username_at' };
+      let local = raw.toLowerCase().replace(/[^a-z0-9._-]/g,'');
+      if(local.length < 2)
+        return { ok:false, code:'username_short' };
+      if(local.length > 64) local = local.slice(0, 64);
+      return { ok:true, authEmail: `${local}@${AUTH_USERNAME_EMAIL_HOST}`, usernameRaw: raw, usernameLocal: local };
+    }
+
+    function resolveSignupUsernameError(code){
+      const map = {
+        empty_username: 'Please choose a username.',
+        username_at: 'Username cannot contain @. Put your work email in the optional email field below.',
+        username_short: 'Username must be at least 2 letters or numbers (you can use . _ -).',
+      };
+      return map[code] || 'Please check your username.';
+    }
+
+    function parseOptionalContactEmail(val){
+      const v = (val||'').trim();
+      if(!v) return { ok:true, email:'' };
+      const r = resolveAuthEmail(v);
+      if(!r.ok) return { ok:false, code:'bad_contact' };
+      if(!r.isEmail) return { ok:false, code:'bad_contact' };
+      const syntheticHost = '@' + AUTH_USERNAME_EMAIL_HOST.toLowerCase();
+      if(r.authEmail.toLowerCase().endsWith(syntheticHost))
+        return { ok:false, code:'contact_synthetic' };
+      return { ok:true, email:r.authEmail };
+    }
+
+    function authErrorMessage(code){
+      const map = {
+        'auth/invalid-email': 'Please enter a valid username or email.',
+        'auth/user-disabled': 'This account has been disabled.',
+        'auth/user-not-found': 'No account found for that username or email.',
+        'auth/wrong-password': 'Incorrect password.',
+        'auth/invalid-credential': 'Incorrect username/email or password.',
+        'auth/email-already-in-use': 'That username or email is already registered.',
+        'auth/weak-password': 'Password should be at least 6 characters.',
+        'auth/too-many-requests': 'Too many attempts. Try again later.',
+        'auth/network-request-failed': 'Network error. Check your connection.',
+        'auth/requires-recent-login': 'Please log out, sign in again, then try deleting your account.',
+      };
+      return map[code] || 'Something went wrong. Please try again.';
+    }
+
+    let _appEntered = false;
 
     function enterApp(){
+      if(_appEntered) return;
+      _appEntered = true;
+      const loginBtn = document.getElementById('login-btn');
+      if(loginBtn){ loginBtn.disabled=false; loginBtn.textContent='Log In'; }
+      const signupBtn = document.getElementById('signup-btn');
+      if(signupBtn){ signupBtn.disabled=false; signupBtn.textContent='Create account'; }
       document.getElementById('login-screen').style.display='none';
       document.getElementById('shell').style.display='';
       init();
     }
 
-    window.doLogin = function(){
-      const u = (document.getElementById('login-user').value||'').trim();
-      const p = (document.getElementById('login-pass').value||'').trim();
-      const err = document.getElementById('login-err');
-      const btn = document.getElementById('login-btn');
-      if(ACCOUNTS[u] && ACCOUNTS[u]===p){
-        err.style.display='none';
-        btn.textContent='Logging in…'; btn.disabled=true;
-        sessionStorage.setItem(SESSION_KEY, u); // persist for reloads; cleared on tab close
-        enterApp();
-      } else {
-        err.style.display='block';
-        document.getElementById('login-pass').value='';
-        document.getElementById('login-pass').focus();
-      }
-    };
-
-    window.doLogout = function(){
-      if(!confirm('Log out?')) return;
-      sessionStorage.removeItem(SESSION_KEY);
-      // Detach real-time listener before tearing down the shell
+    function leaveApp(){
+      _appEntered = false;
       if(_unsubItems){ _unsubItems(); _unsubItems=null; }
       document.getElementById('shell').style.display='none';
       document.getElementById('login-screen').style.display='';
-      // Reset login form
-      const uEl=document.getElementById('login-user');
+      const eEl=document.getElementById('login-email');
       const pEl=document.getElementById('login-pass');
       const btn=document.getElementById('login-btn');
-      const err=document.getElementById('login-err');
-      if(uEl) uEl.value='';
+      if(eEl) eEl.value='';
       if(pEl) pEl.value='';
       if(btn){ btn.disabled=false; btn.textContent='Log In'; }
-      if(err) err.style.display='none';
+      hideLoginError();
+      resetSignupForm();
+      showSignInForm();
+    }
+
+    function resetSignupForm(){
+      ['signup-name','signup-username','signup-contact-email','signup-pass','signup-pass2'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.value='';
+      });
+      const sb=document.getElementById('signup-btn');
+      if(sb){ sb.disabled=false; sb.textContent='Create account'; }
+      hideSignupError();
+    }
+
+    window.showSignUpForm = function(){
+      hideLoginError();
+      document.getElementById('login-form-signin').style.display='none';
+      document.getElementById('login-form-signup').style.display='';
+      const su=document.getElementById('signup-username');
+      if(su) su.focus();
+    };
+    window.showSignInForm = function(){
+      hideSignupError();
+      document.getElementById('login-form-signup').style.display='none';
+      document.getElementById('login-form-signin').style.display='';
+      const le=document.getElementById('login-email');
+      if(le) le.focus();
     };
 
-    // Allow Enter key on both fields
-    ['login-user','login-pass'].forEach(id=>{
-      document.getElementById(id).addEventListener('keydown', e=>{ if(e.key==='Enter') window.doLogin(); });
-    });
-
-    // ── Auto-restore session on page reload ──
-    // sessionStorage survives F5/Ctrl+R but is cleared when the tab is closed.
-    const savedUser = sessionStorage.getItem(SESSION_KEY);
-    if(savedUser && ACCOUNTS[savedUser]){
-      enterApp(); // skip login screen
+    /** Ensures `users/{uid}` exists and stays in sync with Auth (handles race with sign-up writes). */
+    async function syncUserDocFromAuth(user){
+      const ref = userDocRef(user.uid);
+      const snap = await getDoc(ref);
+      const existing = snap.exists() ? snap.data() : {};
+      const displayName = (user.displayName || existing.displayName || '').trim();
+      const payload = {
+        email: user.email || '',
+        displayName,
+        updatedAt: serverTimestamp(),
+      };
+      if(!snap.exists()){
+        await setDoc(ref, {
+          ...payload,
+          createdAt: serverTimestamp(),
+          approved: NEW_USERS_APPROVED_BY_DEFAULT,
+        });
+      } else {
+        await setDoc(ref, payload, { merge: true });
+      }
     }
+
+    async function isUserAllowed(user){
+      const snap = await getDoc(userDocRef(user.uid));
+      if(!snap.exists()) return true;
+      return snap.data().approved !== false;
+    }
+
+    window.doLogin = async function(){
+      const rawId = (document.getElementById('login-email').value||'').trim();
+      const password = (document.getElementById('login-pass').value||'').trim();
+      const btn = document.getElementById('login-btn');
+      hideLoginError();
+      if(!rawId || !password){
+        showLoginError('Please enter your username or email and password.');
+        return;
+      }
+      const resolved = resolveAuthEmail(rawId);
+      if(!resolved.ok){
+        showLoginError(resolveAuthEmailError(resolved.code));
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Signing in…';
+      const passInput = document.getElementById('login-pass');
+      const finishErr = (code) => {
+        showLoginError(authErrorMessage(code));
+        if(passInput) passInput.value = '';
+        btn.disabled = false;
+        btn.textContent = 'Log In';
+      };
+      try {
+        await signInWithEmailAndPassword(auth, resolved.authEmail, password);
+        hideLoginError();
+      } catch(e1){
+        /* Username accounts authenticate as user@app-cse-login.invalid; optional contact email must resolve via lookup */
+        if(resolved.isEmail){
+          try {
+            const lk = await getDoc(loginLookupRef(resolved.authEmail));
+            const mapped = lk.exists() ? (lk.data().authEmail || '').trim().toLowerCase() : '';
+            if(mapped && mapped !== resolved.authEmail.toLowerCase()){
+              await signInWithEmailAndPassword(auth, mapped, password);
+              hideLoginError();
+              return;
+            }
+          } catch(e2){
+            console.warn(e2);
+            finishErr(e2.code || 'auth/invalid-credential');
+            return;
+          }
+        }
+        console.warn(e1);
+        finishErr(e1.code);
+      }
+    };
+
+    window.doSignUp = async function(){
+      const displayName = (document.getElementById('signup-name').value||'').trim();
+      const usernameInput = (document.getElementById('signup-username').value||'').trim();
+      const contactRaw = (document.getElementById('signup-contact-email').value||'').trim();
+      const password = (document.getElementById('signup-pass').value||'').trim();
+      const password2 = (document.getElementById('signup-pass2').value||'').trim();
+      const btn = document.getElementById('signup-btn');
+      hideSignupError();
+      if(!usernameInput || !password){
+        showSignupError('Username and password are required.');
+        return;
+      }
+      const ur = resolveSignupUsername(usernameInput);
+      if(!ur.ok){
+        showSignupError(resolveSignupUsernameError(ur.code));
+        return;
+      }
+      const contact = parseOptionalContactEmail(contactRaw);
+      if(!contact.ok){
+        const msg = contact.code === 'contact_synthetic'
+          ? 'Optional email must be a real address (not a username-style login).'
+          : 'Optional email is not valid.';
+        showSignupError(msg);
+        return;
+      }
+      if(password !== password2){
+        showSignupError('Passwords do not match.');
+        return;
+      }
+      if(password.length < 6){
+        showSignupError('Password must be at least 6 characters.');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Creating account…';
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, ur.authEmail, password);
+        await setDoc(userDocRef(cred.user.uid), {
+          displayName,
+          username: ur.usernameRaw,
+          usernameLocal: ur.usernameLocal,
+          authEmail: ur.authEmail,
+          contactEmail: contact.email,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          approved: NEW_USERS_APPROVED_BY_DEFAULT,
+        }, { merge: true });
+        if(contact.email)
+          await writeLoginLookup(contact.email, ur.authEmail);
+        hideSignupError();
+        resetSignupForm();
+        showSignInForm();
+        toast('Account created. You are signed in.', 'success');
+      } catch(e){
+        console.warn(e);
+        showSignupError(authErrorMessage(e.code));
+        btn.disabled = false;
+        btn.textContent = 'Create account';
+      }
+    };
+
+    window.doLogout = async function(){
+      if(!confirm('Log out?')) return;
+      try { await signOut(auth); } catch(_){}
+      /* UI clears in onAuthStateChanged when user becomes null */
+    };
+
+    function acctRow(label, val){
+      const v = val == null ? '' : String(val).trim();
+      const show = v === '' ? '—' : v;
+      return `<div class="detail-row"><span class="detail-label">${ea(label)}</span><span class="detail-value">${ea(show)}</span></div>`;
+    }
+
+    async function renderAccountProfile(){
+      const wrap = document.getElementById('acct-profile-rows');
+      const u = auth.currentUser;
+      if(!wrap) return;
+      if(!u){
+        wrap.innerHTML = '<p class="acct-muted">You are not signed in.</p>';
+        return;
+      }
+      let fs = {};
+      try {
+        const snap = await getDoc(userDocRef(u.uid));
+        if(snap.exists()) fs = snap.data();
+      } catch(err){ console.warn('Account profile:', err); }
+      const authEmail = (u.email || '').trim();
+      const syntheticSuffix = '@' + AUTH_USERNAME_EMAIL_HOST;
+      const isUsernameAccount = authEmail.toLowerCase().endsWith(syntheticSuffix.toLowerCase());
+      const dispName = (u.displayName || fs.displayName || '').trim() || '—';
+      const username = (fs.username || '').trim();
+      const contact = (fs.contactEmail || '').trim();
+      const loginUserLabel = username || (isUsernameAccount ? (authEmail.split('@')[0] || '') : '');
+      const rows = [];
+      rows.push(acctRow('Display name', dispName));
+      if(loginUserLabel)
+        rows.push(acctRow('Username (for sign in)', loginUserLabel));
+      rows.push(acctRow('Email (Firebase Authentication)', authEmail || '—'));
+      if(isUsernameAccount){
+        rows.push('<p class="acct-note">This address is for the system only. On the login screen, use your <strong>username</strong> (above) and password.</p>');
+      }
+      rows.push(acctRow('Contact email (optional)', contact || '—'));
+      rows.push(acctRow('User ID', u.uid));
+      rows.push(acctRow('Email verified (Firebase)', u.emailVerified ? 'Yes' : 'No'));
+      wrap.innerHTML = rows.join('');
+    }
+
+    window.openAccountSettings = async function(){
+      const pw = document.getElementById('acct-del-pass');
+      const err = document.getElementById('acct-del-err');
+      if(pw) pw.value = '';
+      if(err){ err.style.display = 'none'; err.textContent = ''; }
+      openModal('modal-account-settings');
+      await renderAccountProfile();
+    };
+
+    window.deleteMyAccount = async function(){
+      const u = auth.currentUser;
+      if(!u){ toast('You are not signed in.', 'error'); return; }
+      const pass = (document.getElementById('acct-del-pass').value||'').trim();
+      const errEl = document.getElementById('acct-del-err');
+      function showDelErr(msg){
+        if(!errEl) return;
+        errEl.textContent = msg;
+        errEl.style.display = 'block';
+      }
+      function hideDelErr(){
+        if(!errEl) return;
+        errEl.style.display = 'none';
+        errEl.textContent = '';
+      }
+      hideDelErr();
+      if(!pass){
+        showDelErr('Enter your password to confirm account deletion.');
+        return;
+      }
+      if(!confirm('Permanently delete this account? Your login and profile will be removed and cannot be recovered.')) return;
+      try {
+        await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, pass));
+        await deleteDoc(userDocRef(u.uid));
+        await deleteUser(u);
+        closeModal('modal-account-settings');
+        toast('Your account has been deleted.', 'success');
+      } catch(e){
+        console.warn(e);
+        if(e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential')
+          showDelErr('Incorrect password.');
+        else if(e.code === 'auth/requires-recent-login')
+          showDelErr(authErrorMessage('auth/requires-recent-login'));
+        else
+          showDelErr(authErrorMessage(e.code) || e.message || 'Could not delete account.');
+      }
+    };
+
+    function showForgotError(msg){
+      const errEl = document.getElementById('forgot-err');
+      if(!errEl) return;
+      errEl.textContent = msg;
+      errEl.style.display = 'block';
+    }
+    function hideForgotError(){
+      const errEl = document.getElementById('forgot-err');
+      if(!errEl) return;
+      errEl.style.display = 'none';
+      errEl.textContent = '';
+    }
+
+    window.openForgotPasswordModal = function(){
+      hideForgotError();
+      const fe = document.getElementById('forgot-email');
+      const le = document.getElementById('login-email');
+      if(fe){
+        fe.value = (le && le.value && le.value.includes('@')) ? le.value.trim() : '';
+      }
+      const btn = document.getElementById('forgot-send-btn');
+      if(btn){ btn.disabled = false; btn.textContent = 'Send reset link'; }
+      openModal('modal-forgot-password');
+      setTimeout(()=>{ if(fe) fe.focus(); }, 80);
+    };
+
+    window.sendPasswordReset = async function(){
+      const raw = (document.getElementById('forgot-email').value||'').trim();
+      const btn = document.getElementById('forgot-send-btn');
+      hideForgotError();
+      if(!raw){
+        showForgotError('Please enter your email.');
+        return;
+      }
+      const resolved = resolveAuthEmail(raw);
+      if(!resolved.ok){
+        showForgotError(resolveAuthEmailError(resolved.code));
+        return;
+      }
+      if(!resolved.isEmail){
+        showForgotError('Password reset only works with the email you registered with. If you use a username only, contact your administrator.');
+        return;
+      }
+      const syntheticHost = '@' + AUTH_USERNAME_EMAIL_HOST.toLowerCase();
+      if(resolved.authEmail.toLowerCase().endsWith(syntheticHost)){
+        showForgotError('That address cannot receive mail. Use your real work email, or contact your administrator if you sign in with a username.');
+        return;
+      }
+      if(!btn) return;
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      try {
+        const canSetContinue = window.location.protocol === 'https:' || window.location.protocol === 'http:';
+        const actionCodeSettings = canSetContinue
+          ? { url: window.location.origin + window.location.pathname.replace(/[#?].*$/, ''), handleCodeInApp: false }
+          : undefined;
+        await sendPasswordResetEmail(auth, resolved.authEmail, actionCodeSettings);
+        toast('Check your inbox (and spam) for the password reset email from Firebase.', 'success');
+        document.getElementById('forgot-email').value = '';
+        closeModal('modal-forgot-password');
+      } catch(e){
+        console.warn(e);
+        if(e.code === 'auth/user-not-found'){
+          toast('If an account exists for that address, a reset email was sent. Check inbox and spam.', 'success');
+          document.getElementById('forgot-email').value = '';
+          closeModal('modal-forgot-password');
+        } else {
+          showForgotError(authErrorMessage(e.code) || e.message || 'Could not send reset email.');
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send reset link';
+      }
+    };
+
+    ['login-email','login-pass'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter') window.doLogin(); });
+    });
+    ['signup-name','signup-username','signup-contact-email','signup-pass','signup-pass2'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter') window.doSignUp(); });
+    });
+    const forgotEmailEl = document.getElementById('forgot-email');
+    if(forgotEmailEl){
+      forgotEmailEl.addEventListener('keydown', e=>{ if(e.key==='Enter') window.sendPasswordReset(); });
+    }
+
+    onAuthStateChanged(auth, async user => {
+      if(user){
+        try {
+          await syncUserDocFromAuth(user);
+          await ensureLoginLookupFromProfile(user);
+          const allowed = await isUserAllowed(user);
+          if(!allowed){
+            await signOut(auth);
+            showLoginError('Your account is not approved yet. Contact the administrator.');
+            leaveApp();
+            return;
+          }
+          enterApp();
+        } catch(err){
+          console.warn(err);
+          await signOut(auth);
+          showLoginError('Could not verify your account. Try again.');
+          leaveApp();
+        }
+      } else {
+        leaveApp();
+      }
+    });
 
     // ── Bootstrap ──
     async function init(){

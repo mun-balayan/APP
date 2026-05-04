@@ -47,19 +47,71 @@
     </div>
     <div class="login-title">APP-CSE 2026</div>
     <div class="login-sub">Municipality of Balayan — General Services Office</div>
-    <div class="login-form">
+    <div id="login-form-signin" class="login-form">
       <div class="login-field">
-        <label class="login-label">Username</label>
-        <input id="login-user" class="login-input" type="text" autocomplete="username" placeholder="Enter username" spellcheck="false">
+        <label class="login-label">Username or email</label>
+        <input id="login-email" class="login-input" type="text" autocomplete="username" placeholder="e.g. juan.delacruz or name@office.gov.ph" spellcheck="false">
       </div>
       <div class="login-field">
         <label class="login-label">Password</label>
         <input id="login-pass" class="login-input" type="password" autocomplete="current-password" placeholder="Enter password">
       </div>
-      <div id="login-err" class="login-err" style="display:none">Incorrect username or password.</div>
-      <button id="login-btn" class="login-btn" onclick="doLogin()">Log In</button>
+      <div id="login-err" class="login-err" style="display:none"></div>
+      <button id="login-btn" type="button" class="login-btn" onclick="doLogin()">Log In</button>
+      <button type="button" class="login-switch login-forgot" onclick="openForgotPasswordModal()">Forgot password?</button>
+      <button type="button" class="login-switch" onclick="showSignUpForm()">Create an account — Sign up</button>
+    </div>
+    <div id="login-form-signup" class="login-form" style="display:none">
+      <div class="login-field">
+        <label class="login-label">Full name</label>
+        <input id="signup-name" class="login-input" type="text" autocomplete="name" placeholder="e.g. Juan Dela Cruz" maxlength="120">
+      </div>
+      <div class="login-field">
+        <label class="login-label">Username</label>
+        <input id="signup-username" class="login-input" type="text" autocomplete="username" placeholder="e.g. juan.delacruz (letters, numbers, . _ -)" maxlength="64" spellcheck="false">
+      </div>
+      <div class="login-field">
+        <label class="login-label">Email <span class="login-opt">(optional)</span></label>
+        <input id="signup-contact-email" class="login-input" type="email" autocomplete="email" placeholder="Work email — for contact or password reset" spellcheck="false">
+      </div>
+      <div class="login-field">
+        <label class="login-label">Password</label>
+        <input id="signup-pass" class="login-input" type="password" autocomplete="new-password" placeholder="At least 6 characters" minlength="6">
+      </div>
+      <div class="login-field">
+        <label class="login-label">Confirm password</label>
+        <input id="signup-pass2" class="login-input" type="password" autocomplete="new-password" placeholder="Re-enter password">
+      </div>
+      <div id="signup-err" class="login-err" style="display:none"></div>
+      <button id="signup-btn" type="button" class="login-btn" onclick="doSignUp()">Create account</button>
+      <button type="button" class="login-switch" onclick="showSignInForm()">Already have an account? Sign in</button>
     </div>
     <div class="login-footer">Annual Procurement Planning System</div>
+  </div>
+</div>
+
+<!-- Forgot password (above login z-index) -->
+<div class="modal-overlay" id="modal-forgot-password">
+  <div class="modal modal-sm" role="dialog" aria-labelledby="forgot-title" aria-modal="true">
+    <div class="modal-header">
+      <div class="modal-title" id="forgot-title">Reset password</div>
+      <button type="button" class="modal-close" onclick="closeModal('modal-forgot-password')" aria-label="Close">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p class="forgot-lead">Enter the <strong>email address</strong> you used when you signed up. Firebase will email you a link to choose a new password.</p>
+      <p class="forgot-note">If you signed up with a <strong>username only</strong> (no email), reset links cannot be delivered — contact your administrator.</p>
+      <div class="login-field" style="margin-top:14px">
+        <label class="form-label" for="forgot-email">Email</label>
+        <input id="forgot-email" class="form-input" type="email" autocomplete="email" placeholder="name@office.gov.ph" spellcheck="false">
+      </div>
+      <div id="forgot-err" class="login-err" style="display:none;margin-top:10px"></div>
+      <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
+        <button type="button" class="btn btn-primary" id="forgot-send-btn" onclick="sendPasswordReset()">Send reset link</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-forgot-password')">Cancel</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -83,6 +135,10 @@
 
   <div class="tb-right">
     <div class="tb-clock" id="topbar-clock"></div>
+    <button type="button" class="btn-account-top" onclick="openAccountSettings()" title="Account settings">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3"/><path d="M4.5 18c.5-3 3.5-5 5.5-5s5 2 5.5 5"/></svg>
+      Account
+    </button>
     <button class="btn-logout-top" onclick="doLogout()" title="Log out">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3h4v14h-4M8 14l4-4-4-4M12 10H4"/></svg>
       Log Out
@@ -565,7 +621,7 @@
 </div>
 
 <!-- MODALS -->
-<div class="modal-overlay" id="modal-item" onclick="closeOverlay(event,'modal-item')">
+<div class="modal-overlay" id="modal-item">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title" id="item-modal-title">Item</div>
@@ -577,7 +633,7 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-form" onclick="closeOverlay(event,'modal-form')">
+<div class="modal-overlay" id="modal-form">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title" id="form-title">Add Item</div>
@@ -589,7 +645,7 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-dept" onclick="closeOverlay(event,'modal-dept')">
+<div class="modal-overlay" id="modal-dept">
   <div class="modal modal-sm">
     <div class="modal-header">
       <div class="modal-title">Manage Departments</div>
@@ -621,7 +677,7 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-catalog-detail" onclick="closeOverlay(event,'modal-catalog-detail')">
+<div class="modal-overlay" id="modal-catalog-detail">
   <div class="modal modal-sm">
     <div class="modal-header">
       <div class="modal-title" id="cat-detail-title">Item Detail</div>
@@ -633,7 +689,7 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-catalog-form" onclick="closeOverlay(event,'modal-catalog-form')">
+<div class="modal-overlay" id="modal-catalog-form">
   <div class="modal modal-sm">
     <div class="modal-header">
       <div class="modal-title" id="cat-form-title">Add Catalog Item</div>
@@ -647,13 +703,44 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<div class="modal-overlay" id="modal-account-settings">
+  <div class="modal modal-sm" role="dialog" aria-labelledby="acct-settings-title" aria-modal="true">
+    <div class="modal-header">
+      <div class="modal-title" id="acct-settings-title">Account settings</div>
+      <button type="button" class="modal-close" onclick="closeModal('modal-account-settings')" aria-label="Close">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="acct-profile-panel">
+        <div class="acct-profile-title">Your profile</div>
+        <p class="acct-profile-lead">You are signed in. Details below come from your account and saved profile.</p>
+        <div id="acct-profile-rows" class="acct-profile-rows"></div>
+      </div>
+      <div class="acct-danger-zone">
+        <div class="acct-dz-title">Delete account</div>
+        <p class="acct-dz-text">This permanently removes your login from Firebase Authentication and deletes your profile in Firestore. This cannot be undone.</p>
+        <label class="form-label" for="acct-del-pass">Confirm with your password</label>
+        <input id="acct-del-pass" class="form-input" type="password" autocomplete="current-password" placeholder="Current password">
+        <div id="acct-del-err" class="login-err" style="display:none;margin-top:10px"></div>
+        <button type="button" class="btn btn-danger" style="margin-top:16px" onclick="deleteMyAccount()">Delete my account</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Firebase — inline module (works from file://) exposes API then signals app.js -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { getFirestore, collection, getDocs, onSnapshot, addDoc, updateDoc, deleteDoc, doc, writeBatch }
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, deleteUser, EmailAuthProvider, reauthenticateWithCredential }
+    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import { getFirestore, collection, getDocs, getDoc, setDoc, onSnapshot, addDoc, updateDoc, deleteDoc, doc, writeBatch, serverTimestamp }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-  window.__fb_api = { initializeApp, getFirestore, collection, getDocs, onSnapshot, addDoc, updateDoc, deleteDoc, doc, writeBatch };
+  window.__fb_api = {
+    initializeApp, getFirestore, collection, getDocs, getDoc, setDoc, onSnapshot, addDoc, updateDoc, deleteDoc, doc, writeBatch, serverTimestamp,
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail,
+    deleteUser, EmailAuthProvider, reauthenticateWithCredential,
+  };
   document.dispatchEvent(new Event('fb-api-ready'));
 </script>
 
