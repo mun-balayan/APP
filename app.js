@@ -3023,6 +3023,23 @@ const firebaseConfig = {
       setTimeout(()=>{ if(fe) fe.focus(); }, 80);
     };
 
+    /**
+     * Same mapping as login: optional contact email in Firestore → Firebase Auth email.
+     * Password reset must target Auth email; contact Gmail alone is not registered in Auth for username sign-ups.
+     */
+    async function resolvePasswordResetAuthEmail(resolved){
+      if(!resolved.ok || !resolved.isEmail) return resolved;
+      try {
+        const lk = await getDoc(loginLookupRef(resolved.authEmail));
+        if(lk.exists()){
+          const mapped = (lk.data().authEmail || '').trim().toLowerCase();
+          if(mapped && mapped !== resolved.authEmail.toLowerCase())
+            return { ...resolved, authEmail: mapped };
+        }
+      } catch(err){ console.warn('password reset login_lookup:', err); }
+      return resolved;
+    }
+
     window.sendPasswordReset = async function(){
       const raw = (document.getElementById('forgot-email').value||'').trim();
       const btn = document.getElementById('forgot-send-btn');
@@ -3031,7 +3048,7 @@ const firebaseConfig = {
         showForgotError('Please enter your email.');
         return;
       }
-      const resolved = resolveAuthEmail(raw);
+      let resolved = resolveAuthEmail(raw);
       if(!resolved.ok){
         showForgotError(resolveAuthEmailError(resolved.code));
         return;
@@ -3040,9 +3057,12 @@ const firebaseConfig = {
         showForgotError('Password reset only works with the email you registered with. If you use a username only, contact your administrator.');
         return;
       }
+      resolved = await resolvePasswordResetAuthEmail(resolved);
       const syntheticHost = '@' + AUTH_USERNAME_EMAIL_HOST.toLowerCase();
       if(resolved.authEmail.toLowerCase().endsWith(syntheticHost)){
-        showForgotError('That address cannot receive mail. Use your real work email, or contact your administrator if you sign in with a username.');
+        showForgotError(
+          'Your account signs in with a username. Firebase sends reset links to a system-only address, not to Gmail. Sign in with your username and password, or contact your administrator for help.'
+        );
         return;
       }
       if(!btn) return;
@@ -3060,9 +3080,9 @@ const firebaseConfig = {
       } catch(e){
         console.warn(e);
         if(e.code === 'auth/user-not-found'){
-          toast('If an account exists for that address, a reset email was sent. Check inbox and spam.', 'success');
-          document.getElementById('forgot-email').value = '';
-          closeModal('modal-forgot-password');
+          showForgotError(
+            'No account uses that email in Firebase Authentication. If you sign in with a username, try that above — your Gmail may be contact info only. Otherwise contact your administrator.'
+          );
         } else {
           showForgotError(authErrorMessage(e.code) || e.message || 'Could not send reset email.');
         }
