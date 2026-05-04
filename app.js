@@ -2587,9 +2587,9 @@ const firebaseConfig = {
 
     const userDocRef = uid => doc(db, 'users', uid);
 
-    /** Maps normalized contact email → real Firebase Auth email (username accounts use synthetic @ host). */
-    const loginLookupRef = normalizedEmail =>
-      doc(db, 'login_lookup', (normalizedEmail||'').trim().toLowerCase());
+    /** Doc id: real email (lowercase) OR username local part (no @) → Firebase Auth `email` for sign-in / reset. */
+    const loginLookupRef = normalizedKey =>
+      doc(db, 'login_lookup', (normalizedKey||'').trim().toLowerCase());
 
     async function writeLoginLookup(contactEmail, authEmail){
       const ce = (contactEmail||'').trim().toLowerCase();
@@ -2598,14 +2598,16 @@ const firebaseConfig = {
       await setDoc(loginLookupRef(ce), { authEmail: ae, updatedAt: serverTimestamp() }, { merge: true });
     }
 
-    /** Lets users sign in with optional contact email after one username-based login (backfill). */
+    /** Keeps `login_lookup` in sync: username → Auth email, and optional contact email → Auth email (backfill). */
     async function ensureLoginLookupFromProfile(user){
       try {
         const snap = await getDoc(userDocRef(user.uid));
         if(!snap.exists()) return;
         const d = snap.data();
         const ce = (d.contactEmail||'').trim().toLowerCase();
+        const ul = (d.usernameLocal || '').trim().toLowerCase();
         const ae = (user.email||'').trim().toLowerCase();
+        if(ul && ae) await writeLoginLookup(ul, ae);
         if(ce && ae) await writeLoginLookup(ce, ae);
       } catch(err){ console.warn('login_lookup sync:', err); }
     }
@@ -2822,9 +2824,20 @@ const firebaseConfig = {
         await signInWithEmailAndPassword(auth, resolved.authEmail, password);
         hideLoginError();
       } catch(e1){
-        /* Username accounts authenticate as user@app-cse-login.invalid; optional contact email must resolve via lookup */
-        if(resolved.isEmail){
-          try {
+        /* Map username or contact email → real Firebase Auth email (synthetic or work Gmail, etc.) */
+        try {
+          if(!resolved.isEmail){
+            const userKey = resolved.authEmail.split('@')[0] || '';
+            if(userKey){
+              const lk = await getDoc(loginLookupRef(userKey));
+              const mapped = lk.exists() ? (lk.data().authEmail || '').trim().toLowerCase() : '';
+              if(mapped && mapped !== resolved.authEmail.toLowerCase()){
+                await signInWithEmailAndPassword(auth, mapped, password);
+                hideLoginError();
+                return;
+              }
+            }
+          } else {
             const lk = await getDoc(loginLookupRef(resolved.authEmail));
             const mapped = lk.exists() ? (lk.data().authEmail || '').trim().toLowerCase() : '';
             if(mapped && mapped !== resolved.authEmail.toLowerCase()){
@@ -2832,11 +2845,11 @@ const firebaseConfig = {
               hideLoginError();
               return;
             }
-          } catch(e2){
-            console.warn(e2);
-            finishErr(e2.code || 'auth/invalid-credential');
-            return;
           }
+        } catch(e2){
+          console.warn(e2);
+          finishErr(e2.code || 'auth/invalid-credential');
+          return;
         }
         console.warn(e1);
         finishErr(e1.code);
@@ -2879,19 +2892,37 @@ const firebaseConfig = {
       btn.disabled = true;
       btn.textContent = 'Creating account…';
       try {
-        const cred = await createUserWithEmailAndPassword(auth, ur.authEmail, password);
+        let takenSnap;
+        try {
+          takenSnap = await getDoc(loginLookupRef(ur.usernameLocal));
+        } catch(netErr){
+          console.warn(netErr);
+          showSignupError('Could not verify username availability. Check your connection and try again.');
+          btn.disabled = false;
+          btn.textContent = 'Create account';
+          return;
+        }
+        if(takenSnap.exists()){
+          showSignupError('That username is already taken. Choose another or sign in.');
+          btn.disabled = false;
+          btn.textContent = 'Create account';
+          return;
+        }
+        const authEmailPrimary = contact.email ? contact.email : ur.authEmail;
+        const cred = await createUserWithEmailAndPassword(auth, authEmailPrimary, password);
         await setDoc(userDocRef(cred.user.uid), {
           displayName,
           username: ur.usernameRaw,
           usernameLocal: ur.usernameLocal,
-          authEmail: ur.authEmail,
+          authEmail: authEmailPrimary,
           contactEmail: contact.email,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
           approved: NEW_USERS_APPROVED_BY_DEFAULT,
         }, { merge: true });
+        await writeLoginLookup(ur.usernameLocal, authEmailPrimary);
         if(contact.email)
-          await writeLoginLookup(contact.email, ur.authEmail);
+          await writeLoginLookup(contact.email, authEmailPrimary);
         hideSignupError();
         resetSignupForm();
         showSignInForm();
@@ -2943,8 +2974,11 @@ const firebaseConfig = {
       rows.push(acctRow('Email (Firebase Authentication)', authEmail || '—'));
       if(isUsernameAccount){
         rows.push('<p class="acct-note">This address is for the system only. On the login screen, use your <strong>username</strong> (above) and password.</p>');
+      } else {
+        rows.push('<p class="acct-note">You can sign in with your <strong>username</strong> (above) or this email and your password. Password reset goes to this address.</p>');
       }
-      rows.push(acctRow('Contact email (optional)', contact || '—'));
+      if(contact && contact.toLowerCase() !== authEmail.toLowerCase())
+        rows.push(acctRow('Contact email (optional)', contact));
       rows.push(acctRow('User ID', u.uid));
       rows.push(acctRow('Email verified (Firebase)', u.emailVerified ? 'Yes' : 'No'));
       wrap.innerHTML = rows.join('');
@@ -3058,13 +3092,6 @@ const firebaseConfig = {
         return;
       }
       resolved = await resolvePasswordResetAuthEmail(resolved);
-      const syntheticHost = '@' + AUTH_USERNAME_EMAIL_HOST.toLowerCase();
-      if(resolved.authEmail.toLowerCase().endsWith(syntheticHost)){
-        showForgotError(
-          'Your account signs in with a username. Firebase sends reset links to a system-only address, not to Gmail. Sign in with your username and password, or contact your administrator for help.'
-        );
-        return;
-      }
       if(!btn) return;
       btn.disabled = true;
       btn.textContent = 'Sending…';
@@ -3080,9 +3107,9 @@ const firebaseConfig = {
       } catch(e){
         console.warn(e);
         if(e.code === 'auth/user-not-found'){
-          showForgotError(
-            'No account uses that email in Firebase Authentication. If you sign in with a username, try that above — your Gmail may be contact info only. Otherwise contact your administrator.'
-          );
+          toast('If an account exists for that address, a reset email was sent. Check inbox and spam.', 'success');
+          document.getElementById('forgot-email').value = '';
+          closeModal('modal-forgot-password');
         } else {
           showForgotError(authErrorMessage(e.code) || e.message || 'Could not send reset email.');
         }

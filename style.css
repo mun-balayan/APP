@@ -1057,8 +1057,8 @@ tbody td:last-child { border-right: none; }
 .login-card{position:relative;background:#fff;border-radius:18px;padding:40px 36px 32px;width:100%;max-width:360px;box-shadow:0 24px 64px rgba(0,0,0,.35),0 4px 16px rgba(0,0,0,.2);display:flex;flex-direction:column;align-items:center;gap:0;}
 .login-logo{width:64px;height:64px;margin-bottom:14px;}
 .login-logo img{width:100%;height:100%;object-fit:contain;}
-.login-title{font-size:20px;font-weight:800;color:#1B3A6B;letter-spacing:.4px;margin-bottom:3px;}
-.login-sub{font-size:10.5px;color:#64748B;text-align:center;margin-bottom:24px;line-height:1.5;}
+.login-title{font-size:20px;font-weight:800;color:#1B3A6B;letter-spacing:.4px;margin-bottom:3px;text-align:center;width:100%;line-height:1.25;}
+.login-sub{font-size:10.5px;color:#64748B;text-align:center;margin-bottom:24px;line-height:1.5;width:100%;}
 .login-form{width:100%;display:flex;flex-direction:column;gap:14px;}
 .login-field{display:flex;flex-direction:column;gap:5px;}
 .login-label{font-size:11px;font-weight:700;color:#374151;letter-spacing:.3px;}

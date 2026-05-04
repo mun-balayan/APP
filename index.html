@@ -45,7 +45,7 @@
     <div class="login-logo">
       <img src="./logo.png" alt="Logo" onerror="this.style.display='none'">
     </div>
-    <div class="login-title">APP-CSE 2026</div>
+    <div class="login-title">Annual Procurement System</div>
     <div class="login-sub">Municipality of Balayan — General Services Office</div>
     <div id="login-form-signin" class="login-form">
       <div class="login-field">
@@ -71,8 +71,8 @@
         <input id="signup-username" class="login-input" type="text" autocomplete="username" placeholder="e.g. juan.delacruz (letters, numbers, . _ -)" maxlength="64" spellcheck="false">
       </div>
       <div class="login-field">
-        <label class="login-label">Email <span class="login-opt">(optional)</span></label>
-        <input id="signup-contact-email" class="login-input" type="email" autocomplete="email" placeholder="Work email — for contact or password reset" spellcheck="false">
+        <label class="login-label">Email <span class="login-opt">(recommended)</span></label>
+        <input id="signup-contact-email" class="login-input" type="email" autocomplete="email" placeholder="Your real email — Firebase login and password reset" spellcheck="false">
       </div>
       <div class="login-field">
         <label class="login-label">Password</label>
@@ -100,8 +100,8 @@
       </button>
     </div>
     <div class="modal-body">
-      <p class="forgot-lead">Enter the <strong>email address</strong> your account uses in Firebase Authentication. If you only added Gmail as optional contact info but sign in with a <strong>username</strong>, reset mail cannot reach Gmail — sign in with your username or ask an administrator.</p>
-      <p class="forgot-note">Username accounts use an internal system email for Auth; Google never mails your personal inbox for those. Use <strong>Account</strong> after login if you need your profile email on file.</p>
+      <p class="forgot-lead">Enter the <strong>email address</strong> you used when you signed up (or the optional contact email if you added one). Firebase will email you a link to choose a new password.</p>
+      <p class="forgot-note">If you signed up with a <strong>username only</strong> (no email), reset links cannot be delivered — contact your administrator.</p>
       <div class="login-field" style="margin-top:14px">
         <label class="form-label" for="forgot-email">Email</label>
         <input id="forgot-email" class="form-input" type="email" autocomplete="email" placeholder="name@office.gov.ph" spellcheck="false">
