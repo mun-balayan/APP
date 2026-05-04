@@ -276,7 +276,12 @@
       <td style="color:#484f58">${i+1}</td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e6edf3;font-weight:500">${r.item}</td>
       <td><span class="ibgr">${r.department}</span></td>
-      <td><span class="${r.type==='Office Supplies'?'ibb':r.type==='Machinery'?'iba':r.type==='Other Supplies'?'ibp':'ibgr'}">${r.type}</span></td>
+      <td><span class="${(function(ty){
+        if(ty==='Office Supplies') return 'ibb';
+        if(ty==='Machinery'||ty==='Semi-Expendable Machinery Equipments'||ty==='Semi-Expendable Communication Equipments') return 'iba';
+        if(ty==='Other Supplies'||ty==="Semi-Expendable Other's Supplies"||ty==='Semi-Expendable Office Supplies') return 'ibp';
+        return 'ibgr';
+      })(r.type)}">${r.type}</span></td>
       <td style="color:#8b949e">${r.month}</td>
       <td style="color:#8b949e">${r.unit_of_measure}</td>
       <td style="font-family:monospace;color:#e3b341">₱${parseFloat(r.unit_price).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>

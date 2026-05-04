@@ -60,18 +60,52 @@ const firebaseConfig = {
     let   DEPTS = [...BUILTIN_DEPTS]; // Will be extended by Firestore depts
     let   CUSTOM_DEPT_DOCS = []; // [{id, name}] for Firestore-stored depts
 
-    const TYPES  = ['Office Supplies','Other Supplies','Machinery'];
-    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const TYPE_SEMI_OFFICE = 'Semi-Expendable Office Supplies';
+    const TYPE_SEMI_OTHER  = "Semi-Expendable Other's Supplies";
+    const TYPE_SEMI_COMM   = 'Semi-Expendable Communication Equipments';
+    const TYPE_SEMI_MACH   = 'Semi-Expendable Machinery Equipments';
 
-    // Normalize type: legacy 'CSE' → 'Office Supplies'
+    const TYPES  = ['Office Supplies','Other Supplies','Machinery', TYPE_SEMI_OFFICE, TYPE_SEMI_OTHER, TYPE_SEMI_COMM, TYPE_SEMI_MACH];
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const MONTH_KEYS = {January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'};
+
+    /** All procurement types for reports / dashboard / dept filters (order = display order). */
+    const REPORT_CATS = [...TYPES];
+    const REPORT_CAT_LABELS = {
+      'Office Supplies':'OFFICE SUPPLIES',
+      'Other Supplies':'OTHER SUPPLIES',
+      'Machinery':'MACHINERY / EQUIPMENT',
+      [TYPE_SEMI_OFFICE]:'SEMI-EXPENDABLE OFFICE SUPPLIES',
+      [TYPE_SEMI_OTHER]:'SEMI-EXPENDABLE OTHER\'S SUPPLIES',
+      [TYPE_SEMI_COMM]:'SEMI-EXPENDABLE COMMUNICATION EQUIPMENTS',
+      [TYPE_SEMI_MACH]:'SEMI-EXPENDABLE MACHINERY EQUIPMENTS',
+    };
+
+    // Normalize type: legacy 'CSE' → 'Office Supplies'; semi-expendable variants → canonical strings
     function normalizeType(t){
       if(!t) return 'Office Supplies';
-      const tl=String(t).trim().toLowerCase();
+      const raw = String(t).trim();
+      const tl = raw.toLowerCase();
       if(tl==='cse'||tl==='office supplies') return 'Office Supplies';
       if(tl==='other supplies') return 'Other Supplies';
       if(tl==='machinery') return 'Machinery';
+      if(tl.includes('semi-expendable') || tl.includes('semi expendable')){
+        if(tl.includes('communication')) return TYPE_SEMI_COMM;
+        if(tl.includes('machinery')) return TYPE_SEMI_MACH;
+        if(tl.includes('other')) return TYPE_SEMI_OTHER;
+        if(tl.includes('office')) return TYPE_SEMI_OFFICE;
+      }
+      if(TYPES.includes(raw)) return raw;
       return 'Office Supplies'; // unknown → default
     }
+
+    const SEMI_TYPE_PAGES = [
+      { key:'semiOs', slug:'semi-os', type: TYPE_SEMI_OFFICE, sk:'semiOsSearch', dk:'semiOsDept', mk:'semiOsMonth', ak:'semiOsAvail', titleHtml:'All <em>Semi-Expendable Office Supplies</em>', printTitle:'Semi-Expendable Office Supplies' },
+      { key:'semiOt', slug:'semi-ot', type: TYPE_SEMI_OTHER, sk:'semiOtSearch', dk:'semiOtDept', mk:'semiOtMonth', ak:'semiOtAvail', titleHtml:`All <em>Semi-Expendable Other's Supplies</em>`, printTitle:`Semi-Expendable Other's Supplies` },
+      { key:'semiCm', slug:'semi-cm', type: TYPE_SEMI_COMM, sk:'semiCmSearch', dk:'semiCmDept', mk:'semiCmMonth', ak:'semiCmAvail', titleHtml:'All <em>Semi-Expendable Communication Equipments</em>', printTitle:'Semi-Expendable Communication Equipments' },
+      { key:'semiMe', slug:'semi-me', type: TYPE_SEMI_MACH, sk:'semiMeSearch', dk:'semiMeDept', mk:'semiMeMonth', ak:'semiMeAvail', titleHtml:'All <em>Semi-Expendable Machinery Equipments</em>', printTitle:'Semi-Expendable Machinery Equipments' },
+    ];
+    const SEMI_TYPE_PAGE_BY_KEY = Object.fromEntries(SEMI_TYPE_PAGES.map(d=>[d.key, d]));
 
     // ── Icon map for department tabs ──
     const DEPT_ICON_PATHS = {
@@ -90,6 +124,10 @@ const firebaseConfig = {
       officeSearch:'', officeDept:'', officeMonth:'', officeAvail:'',
       otherSearch:'', otherDept:'', otherMonth:'', otherAvail:'',
       machinerySearch:'', machineryDept:'', machineryMonth:'', machineryAvail:'',
+      semiOsSearch:'', semiOsDept:'', semiOsMonth:'', semiOsAvail:'',
+      semiOtSearch:'', semiOtDept:'', semiOtMonth:'', semiOtAvail:'',
+      semiCmSearch:'', semiCmDept:'', semiCmMonth:'', semiCmAvail:'',
+      semiMeSearch:'', semiMeDept:'', semiMeMonth:'', semiMeAvail:'',
       deptSearch:'', deptType:'', deptMonth:'', deptAvail:'' };
 
     // ── Purchase Order Cart ──
@@ -284,7 +322,7 @@ const firebaseConfig = {
 
     function updateFilterDepts(){
       const deptOpts = DEPTS.map(d=>`<option>${d}</option>`).join('');
-      const ids = ['items-dept', 'office-dept', 'other-dept', 'machinery-dept'];
+      const ids = ['items-dept', 'office-dept', 'other-dept', ...SEMI_TYPE_PAGES.map(d=>`${d.slug}-dept`), 'machinery-dept'];
       ids.forEach(id => {
         const el = document.getElementById(id);
         if(el){
@@ -496,6 +534,81 @@ const firebaseConfig = {
       const item = ITEM_CATALOG.find(i=>i.id===id); if(!item) return;
       const isAvail = !(item.availability||'').toLowerCase().includes('not');
       const price = parseFloat(item.price||0);
+
+      // ── Build department availability data ──
+      const Q1K = ['qty_jan','qty_feb','qty_mar'];
+      const Q2K = ['qty_apr','qty_may','qty_jun'];
+      const Q3K = ['qty_jul','qty_aug','qty_sep'];
+      const Q4K = ['qty_oct','qty_nov','qty_dec'];
+      const descNorm = (item.description||'').toLowerCase().trim();
+      const matches = S.items.filter(i=>(i.item||'').toLowerCase().trim()===descNorm);
+      const deptMap = {};
+      matches.forEach(pi=>{
+        const d = pi.department||'—';
+        if(!deptMap[d]) deptMap[d]={q1:0,q2:0,q3:0,q4:0};
+        deptMap[d].q1 += Q1K.reduce((s,k)=>s+(parseFloat(pi[k]||0)),0);
+        deptMap[d].q2 += Q2K.reduce((s,k)=>s+(parseFloat(pi[k]||0)),0);
+        deptMap[d].q3 += Q3K.reduce((s,k)=>s+(parseFloat(pi[k]||0)),0);
+        deptMap[d].q4 += Q4K.reduce((s,k)=>s+(parseFloat(pi[k]||0)),0);
+      });
+      const activeDepts  = Object.keys(deptMap);
+      const inactiveDepts = DEPTS.filter(d=>!activeDepts.includes(d));
+      const fc2 = n => n>0 ? `<span class="da-qty">${n}</span>` : `<span class="da-zero">—</span>`;
+
+      let deptAvailHtml = '';
+      if(activeDepts.length){
+        const rows = activeDepts.map(d=>{
+          const {q1,q2,q3,q4}=deptMap[d];
+          const tot=q1+q2+q3+q4;
+          return `<tr class="da-row">
+            <td class="da-dept"><span class="da-dept-dot"></span>${d}</td>
+            <td class="da-cell">${fc2(q1)}</td>
+            <td class="da-cell">${fc2(q2)}</td>
+            <td class="da-cell">${fc2(q3)}</td>
+            <td class="da-cell">${fc2(q4)}</td>
+            <td class="da-cell da-total">${fc2(tot)}</td>
+          </tr>`;
+        }).join('');
+        deptAvailHtml = `
+          <div class="detail-section">
+            <div class="detail-section-title">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 5h16M2 10h10M2 15h6"/><circle cx="15" cy="14" r="4"/><path d="M13 14h2v2"/></svg>
+              Department Procurement
+            </div>
+            <div class="da-table-wrap">
+              <table class="da-table">
+                <thead>
+                  <tr>
+                    <th class="da-th-dept">Department</th>
+                    <th class="da-th">Q1</th>
+                    <th class="da-th">Q2</th>
+                    <th class="da-th">Q3</th>
+                    <th class="da-th">Q4</th>
+                    <th class="da-th da-th-total">Total</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+            ${inactiveDepts.length ? `<div class="da-inactive-label">Not in procurement:</div>
+            <div class="da-inactive-list">${inactiveDepts.map(d=>`<span class="da-inactive-badge">${d}</span>`).join('')}</div>` : ''}
+          </div>`;
+      } else {
+        deptAvailHtml = `
+          <div class="detail-section">
+            <div class="detail-section-title">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 5h16M2 10h10M2 15h6"/><circle cx="15" cy="14" r="4"/><path d="M13 14h2v2"/></svg>
+              Department Procurement
+            </div>
+            <div class="da-empty">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="10" cy="10" r="8"/><path d="M10 6v4M10 14h.01"/></svg>
+              This item has not been added to any department's procurement plan yet.
+            </div>
+            ${inactiveDepts.length ? `<div class="da-inactive-label" style="margin-top:10px">All departments:</div>
+            <div class="da-inactive-list">${inactiveDepts.map(d=>`<span class="da-inactive-badge">${d}</span>`).join('')}</div>` : ''}
+          </div>`;
+      }
+
       document.getElementById('cat-detail-title').textContent = item.description||'Item';
       document.getElementById('cat-detail-body').innerHTML = `
         <div class="cat-detail-acct">Acct. Code: ${item.acct_code||'—'}</div>
@@ -510,6 +623,7 @@ const firebaseConfig = {
           ${dr('Availability', item.availability)}
           ${dr('Unit Price', '₱'+price.toLocaleString('en-PH',{minimumFractionDigits:2}))}
         </div>
+        ${deptAvailHtml}
         <div class="form-actions" style="padding-top:12px;border-top:1px solid var(--bd2);margin-top:4px;gap:8px">
           <button class="btn btn-danger btn-sm" onclick="confirmDeleteCatalogItem('${id}')">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6h12M8 6V4h4v2M5 6l1 11h8l1-11"/></svg>Delete
@@ -686,7 +800,16 @@ const firebaseConfig = {
     setInterval(updateTime,1000); updateTime();
 
     // ── Navigation ──
-    function switchPage(pg){ S.page=pg; S.dept=null; activatePage(pg); if(pg==='dashboard') loadDashboard(); else if(pg==='items') loadItems(); else if(pg==='office') loadOffice(); else if(pg==='other') loadOther(); else if(pg==='machinery') loadMachinery(); else if(pg==='catalog') loadCatalogPage(); }
+    function switchPage(pg){
+      S.page=pg; S.dept=null; activatePage(pg);
+      if(pg==='dashboard') loadDashboard();
+      else if(pg==='items') loadItems();
+      else if(pg==='office') loadOffice();
+      else if(pg==='other') loadOther();
+      else if(SEMI_TYPE_PAGE_BY_KEY[pg]) loadSemiTypePage(SEMI_TYPE_PAGE_BY_KEY[pg]);
+      else if(pg==='machinery') loadMachinery();
+      else if(pg==='catalog') loadCatalogPage();
+    }
     window.switchPage=switchPage;
 
     function switchDept(dept){
@@ -730,16 +853,12 @@ const firebaseConfig = {
       const dArr=Object.entries(byDeptAmt).sort((a,b)=>b[1].amt-a[1].amt);
       const maxDAmt=Math.max(...dArr.map(x=>x[1].amt),1);
 
-      const byTypeAmt={'Office Supplies':0,'Other Supplies':0,'Machinery':0};
+      const byTypeAmt=Object.fromEntries(REPORT_CATS.map(t=>[t,0]));
       S.items.forEach(i=>{
         const t=normalizeType(i.type);
         if(byTypeAmt[t]!==undefined) byTypeAmt[t]+=parseFloat(i.total_amount||0);
       });
-      const tArr=[
-        ['Office Supplies', byTypeAmt['Office Supplies']],
-        ['Other Supplies',  byTypeAmt['Other Supplies']],
-        ['Machinery',       byTypeAmt['Machinery']],
-      ];
+      const tArr=REPORT_CATS.map(t=>[t, byTypeAmt[t]]);
       const maxTAmt=Math.max(...tArr.map(x=>x[1]),1);
 
       const byMonth={};
@@ -785,7 +904,7 @@ const firebaseConfig = {
           </div>
           <div class="d-card">
             <div class="d-card-head"><div class="d-card-title"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h14M3 10h10M3 14h7"/></svg>By Supply Category — Total Amount</div></div>
-            <div class="d-card-body">${tArr.map(([t,a],i)=>barRow(t,a,maxTAmt,i===0?'':(i===1?'gold':'purple'),fmtAmt(a))).join('')||'<div style="color:var(--ink3);font-size:13px">No data yet</div>'}</div>
+            <div class="d-card-body">${tArr.map(([t,a],i)=>barRow(t.length>36?t.slice(0,34)+'…':t,a,maxTAmt,['','gold','purple'][i%3],fmtAmt(a))).join('')||'<div style="color:var(--ink3);font-size:13px">No data yet</div>'}</div>
           </div>
           <div class="d-card dash-full">
             <div class="d-card-head"><div class="d-card-title"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="16" height="16" rx="1.5"/><path d="M6 2v16M14 2v16M2 7h16M2 13h16"/></svg>Monthly Distribution</div></div>
@@ -809,6 +928,10 @@ const firebaseConfig = {
       const machineryCount = S.items.filter(i => normalizeType(i.type) === 'Machinery').length;
       document.getElementById('badge-office').textContent = officeCount;
       document.getElementById('badge-other').textContent = otherCount;
+      SEMI_TYPE_PAGES.forEach(def=>{
+        const el = document.getElementById(`badge-${def.key}`);
+        if(el) el.textContent = S.items.filter(i=>normalizeType(i.type)===def.type).length;
+      });
       document.getElementById('badge-machinery').textContent = machineryCount;
       DEPTS.forEach(d=>{
         const c=S.items.filter(i=>i.department===d).length;
@@ -844,6 +967,17 @@ const firebaseConfig = {
     }
     window.filterItems=filterItems;
 
+    function applyStdItemFilters(list, q, dept, month, avail){
+      let out = list;
+      const ql = (q||'').toLowerCase();
+      if(ql) out = out.filter(i=>[i.item,i.department,i.month,i.unit_of_measure].join(' ').toLowerCase().includes(ql));
+      if(dept) out = out.filter(i=>i.department===dept);
+      if(month){ out = out.filter(i=>parseFloat(i[MONTH_KEYS[month]]||0)>0); }
+      if(avail==='not') out = out.filter(i=>(i.availability||'').toLowerCase().includes('not'));
+      else if(avail==='available') out = out.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
+      return out;
+    }
+
     // ── Office Supplies page ──
     async function loadOffice(){
       document.getElementById('office-table').innerHTML='<div class="loading"><div class="loading-spinner"></div><br>Loading…</div>';
@@ -852,13 +986,7 @@ const firebaseConfig = {
     }
     function filteredOffice(){
       let list=S.items.filter(i=>normalizeType(i.type)==='Office Supplies');
-      const q=S.officeSearch.toLowerCase();
-      if(q) list=list.filter(i=>[i.item,i.department,i.month,i.unit_of_measure].join(' ').toLowerCase().includes(q));
-      if(S.officeDept)  list=list.filter(i=>i.department===S.officeDept);
-      if(S.officeMonth){ const mk={January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'}; list=list.filter(i=>parseFloat(i[mk[S.officeMonth]]||0)>0); }
-      if(S.officeAvail==='not')       list=list.filter(i=>(i.availability||'').toLowerCase().includes('not'));
-      else if(S.officeAvail==='available') list=list.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
-      return list;
+      return applyStdItemFilters(list, S.officeSearch, S.officeDept, S.officeMonth, S.officeAvail);
     }
     function filterOffice(){
       S.officeSearch=(document.getElementById('office-search').value||'').toLowerCase();
@@ -879,13 +1007,7 @@ const firebaseConfig = {
     }
     function filteredOther(){
       let list=S.items.filter(i=>normalizeType(i.type)==='Other Supplies');
-      const q=S.otherSearch.toLowerCase();
-      if(q) list=list.filter(i=>[i.item,i.department,i.month,i.unit_of_measure].join(' ').toLowerCase().includes(q));
-      if(S.otherDept)  list=list.filter(i=>i.department===S.otherDept);
-      if(S.otherMonth){ const mk={January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'}; list=list.filter(i=>parseFloat(i[mk[S.otherMonth]]||0)>0); }
-      if(S.otherAvail==='not')       list=list.filter(i=>(i.availability||'').toLowerCase().includes('not'));
-      else if(S.otherAvail==='available') list=list.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
-      return list;
+      return applyStdItemFilters(list, S.otherSearch, S.otherDept, S.otherMonth, S.otherAvail);
     }
     function filterOther(){
       S.otherSearch=(document.getElementById('other-search').value||'').toLowerCase();
@@ -906,13 +1028,7 @@ const firebaseConfig = {
     }
     function filteredMachinery(){
       let list=S.items.filter(i=>normalizeType(i.type)==='Machinery');
-      const q=S.machinerySearch.toLowerCase();
-      if(q) list=list.filter(i=>[i.item,i.department,i.month,i.unit_of_measure].join(' ').toLowerCase().includes(q));
-      if(S.machineryDept)  list=list.filter(i=>i.department===S.machineryDept);
-      if(S.machineryMonth){ const mk={January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'}; list=list.filter(i=>parseFloat(i[mk[S.machineryMonth]]||0)>0); }
-      if(S.machineryAvail==='not')       list=list.filter(i=>(i.availability||'').toLowerCase().includes('not'));
-      else if(S.machineryAvail==='available') list=list.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
-      return list;
+      return applyStdItemFilters(list, S.machinerySearch, S.machineryDept, S.machineryMonth, S.machineryAvail);
     }
     function filterMachinery(){
       S.machinerySearch=(document.getElementById('machinery-search').value||'').toLowerCase();
@@ -924,6 +1040,28 @@ const firebaseConfig = {
       renderTable(list,'machinery-table',true);
     }
     window.filterMachinery=filterMachinery;
+
+    async function loadSemiTypePage(def){
+      document.getElementById(`${def.slug}-table`).innerHTML='<div class="loading"><div class="loading-spinner"></div><br>Loading…</div>';
+      if(!S.items.length){ try { S.items=await getAll(); } catch(e){ return; } }
+      updateBadges(); filterSemiTypePage(def.key);
+    }
+    function filteredSemiTypePage(def){
+      let list=S.items.filter(i=>normalizeType(i.type)===def.type);
+      return applyStdItemFilters(list, S[def.sk], S[def.dk], S[def.mk], S[def.ak]);
+    }
+    function filterSemiTypePage(key){
+      const def = SEMI_TYPE_PAGE_BY_KEY[key];
+      if(!def) return;
+      S[def.sk]=(document.getElementById(`${def.slug}-search`).value||'').toLowerCase();
+      S[def.dk]=document.getElementById(`${def.slug}-dept`).value;
+      S[def.mk]=document.getElementById(`${def.slug}-month`).value;
+      S[def.ak]=document.getElementById(`${def.slug}-avail`).value;
+      const list=filteredSemiTypePage(def);
+      document.getElementById(`${def.slug}-count`).textContent=`${list.length} record${list.length!==1?'s':''}`;
+      renderTable(list,`${def.slug}-table`,true);
+    }
+    window.filterSemiTypePage=filterSemiTypePage;
 
     // ── Dept page ──
     function filterDeptPage(){
@@ -939,8 +1077,8 @@ const firebaseConfig = {
       else if(S.deptAvail==='available') list=list.filter(i=>!(i.availability||'').toLowerCase().includes('not'));
 
       // ── Render type totals cards ──
-      const typeTotals = {'Office Supplies':0,'Other Supplies':0,'Machinery':0};
-      const typeCounts = {'Office Supplies':0,'Other Supplies':0,'Machinery':0};
+      const typeTotals = Object.fromEntries(REPORT_CATS.map(t=>[t,0]));
+      const typeCounts = Object.fromEntries(REPORT_CATS.map(t=>[t,0]));
       list.forEach(i=>{
         const t = normalizeType(i.type);
         if(typeTotals[t]!==undefined){
@@ -949,22 +1087,17 @@ const firebaseConfig = {
         }
       });
       const fmtAmt=n=>'₱'+n.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
-      document.getElementById('dept-type-totals').innerHTML=`
-        <div class="type-total-card tc-blue">
-          <div class="type-total-label">Office Supplies</div>
-          <div class="type-total-amount">${fmtAmt(typeTotals['Office Supplies'])}</div>
-          <div class="type-total-count">${typeCounts['Office Supplies']} item${typeCounts['Office Supplies']!==1?'s':''}</div>
-        </div>
-        <div class="type-total-card tc-gold">
-          <div class="type-total-label">Other Supplies</div>
-          <div class="type-total-amount a-gold">${fmtAmt(typeTotals['Other Supplies'])}</div>
-          <div class="type-total-count">${typeCounts['Other Supplies']} item${typeCounts['Other Supplies']!==1?'s':''}</div>
-        </div>
-        <div class="type-total-card tc-purple">
-          <div class="type-total-label">Machinery</div>
-          <div class="type-total-amount a-purple">${fmtAmt(typeTotals['Machinery'])}</div>
-          <div class="type-total-count">${typeCounts['Machinery']} item${typeCounts['Machinery']!==1?'s':''}</div>
+      const cardCls=['tc-blue','tc-gold','tc-purple'];
+      const amtCls=['','a-gold','a-purple'];
+      document.getElementById('dept-type-totals').innerHTML=REPORT_CATS.map((t,idx)=>{
+        const c=cardCls[idx%3], a=amtCls[idx%3];
+        const shortLabel = t.length>42 ? t.slice(0,40)+'…' : t;
+        return `<div class="type-total-card ${c}">
+          <div class="type-total-label" title="${ea(t)}">${ea(shortLabel)}</div>
+          <div class="type-total-amount ${a}">${fmtAmt(typeTotals[t])}</div>
+          <div class="type-total-count">${typeCounts[t]} item${typeCounts[t]!==1?'s':''}</div>
         </div>`;
+      }).join('');
 
       renderTable(list,'dept-table',false);
     }
@@ -977,6 +1110,10 @@ const firebaseConfig = {
       if(nt==='Office Supplies') return `<span class="badge badge-blue">Office Supplies</span>`;
       if(nt==='Machinery')       return `<span class="badge badge-gold">Machinery</span>`;
       if(nt==='Other Supplies')  return `<span class="badge badge-purple">Other Supplies</span>`;
+      if(nt===TYPE_SEMI_OFFICE)  return `<span class="badge badge-blue">${TYPE_SEMI_OFFICE}</span>`;
+      if(nt===TYPE_SEMI_OTHER)   return `<span class="badge badge-purple">${TYPE_SEMI_OTHER}</span>`;
+      if(nt===TYPE_SEMI_COMM)    return `<span class="badge badge-gold">${TYPE_SEMI_COMM}</span>`;
+      if(nt===TYPE_SEMI_MACH)    return `<span class="badge badge-gold">${TYPE_SEMI_MACH}</span>`;
       return `<span class="badge badge-gray">${nt||'—'}</span>`;
     }
 
@@ -1102,7 +1239,6 @@ const firebaseConfig = {
     function fs(name,label,opts,v={}){ return `<div class="form-group"><label class="form-label">${label}</label><select class="form-select" name="${name}"><option value="">—</option>${opts.map(o=>`<option ${(v[name]||'')==o?'selected':''}>${o}</option>`).join('')}</select></div>`; }
 
     // Month key map: Month name → field name
-    const MONTH_KEYS = {January:'qty_jan',February:'qty_feb',March:'qty_mar',April:'qty_apr',May:'qty_may',June:'qty_jun',July:'qty_jul',August:'qty_aug',September:'qty_sep',October:'qty_oct',November:'qty_nov',December:'qty_dec'};
     const QUARTERS = [
       {label:'Q1 — Jan · Feb · Mar', months:['January','February','March']},
       {label:'Q2 — Apr · May · Jun', months:['April','May','June']},
@@ -1321,12 +1457,10 @@ const firebaseConfig = {
       }
 
       // Build rows grouped by category then availability
-      const CATS = ['Office Supplies','Other Supplies','Machinery'];
-      const CAT_LABELS = {'Office Supplies':'OFFICE SUPPLIES','Other Supplies':'OTHER SUPPLIES','Machinery':'MACHINERY / EQUIPMENT'};
       let rowsHTML = '';
       let runningIdx = 1;
 
-      CATS.forEach(cat => {
+      REPORT_CATS.forEach(cat => {
         const catItems = items.filter(i=>normalizeType(i.type)===cat);
         if(!catItems.length) return;
 
@@ -1335,7 +1469,7 @@ const firebaseConfig = {
         const catTotal    = catItems.reduce((s,i)=>s+(qSum(i,[...Q1,...Q2,...Q3,...Q4])*parseFloat(i.unit_price||0)),0);
 
         // Category header
-        rowsHTML += `<tr class="cat-head"><td colspan="${NCOLS}" class="tl">${CAT_LABELS[cat]}</td></tr>`;
+        rowsHTML += `<tr class="cat-head"><td colspan="${NCOLS}" class="tl">${REPORT_CAT_LABELS[cat]}</td></tr>`;
 
         if(catAvail.length){
           rowsHTML += `<tr class="avail-head"><td colspan="${NCOLS}" class="tl">AVAILABLE AT PROCUREMENT SERVICE STORES</td></tr>`;
@@ -1359,7 +1493,7 @@ const firebaseConfig = {
 
         // Category subtotal
         rowsHTML += `<tr class="cat-subtotal">
-          <td colspan="${NCOLS-3}" class="tr">Sub-Total — ${CAT_LABELS[cat]}</td>
+          <td colspan="${NCOLS-3}" class="tr">Sub-Total — ${REPORT_CAT_LABELS[cat]}</td>
           <td></td><td></td>
           <td class="tr bold">${fmtN(catTotal)}</td>
         </tr>`;
@@ -1575,11 +1709,20 @@ const firebaseConfig = {
         // Case-insensitive type normalizer — guarantees every item maps to a known category
         function normType(t){
           if(!t) return 'Office Supplies';
-          const tl=String(t).trim().toLowerCase();
+          const raw=String(t).trim();
+          const tl=raw.toLowerCase();
           if(tl==='cse'||tl==='office supplies') return 'Office Supplies';
           if(tl==='other supplies') return 'Other Supplies';
           if(tl==='machinery') return 'Machinery';
-          return 'Office Supplies'; // fallback: unknown types go to Office Supplies
+          if(tl.includes('semi-expendable')||tl.includes('semi expendable')){
+            if(tl.includes('communication')) return ${JSON.stringify(TYPE_SEMI_COMM)};
+            if(tl.includes('machinery')) return ${JSON.stringify(TYPE_SEMI_MACH)};
+            if(tl.includes('other')) return ${JSON.stringify(TYPE_SEMI_OTHER)};
+            if(tl.includes('office')) return ${JSON.stringify(TYPE_SEMI_OFFICE)};
+          }
+          const ALL=${JSON.stringify(TYPES)};
+          if(ALL.includes(raw)) return raw;
+          return 'Office Supplies';
         }
 
         // ── STYLE CONSTANTS ──────────────────────────────────────
@@ -1745,8 +1888,8 @@ const firebaseConfig = {
 
           let CR=13;
           const subTotalRows=[];
-          const CATS=['Office Supplies','Other Supplies','Machinery'];
-          const CAT_LABELS={'Office Supplies':'OFFICE SUPPLIES','Other Supplies':'OTHER SUPPLIES','Machinery':'MACHINERY / EQUIPMENT'};
+          const CATS=${JSON.stringify(REPORT_CATS)};
+          const CAT_LABELS=${JSON.stringify(REPORT_CAT_LABELS)};
           let itemIdx=1;
           // Track row types for post-processing styles
           const rowMeta={}; // CR -> 'cat'|'avail'|'notavail'|'data'|'sub'|'gt'
@@ -2559,6 +2702,16 @@ const firebaseConfig = {
     }
     window.printAllMachinery=printAllMachinery;
 
+    window.printSemiTypePage=function(key){
+      const def = SEMI_TYPE_PAGE_BY_KEY[key];
+      if(!def) return;
+      const items=S.items.filter(i=>normalizeType(i.type)===def.type);
+      if(!items.length){ toast('No items to print','error'); return; }
+      const html=buildPrintHTML(items, `Municipality of Balayan — ${def.printTitle}`, def.printTitle);
+      const win=window.open('','_blank','width=1400,height=900');
+      win.document.write(html); win.document.close();
+    };
+
     // ── Real-time listener for items ──
     // onSnapshot is the single source of truth for S.items after init.
     // It updates S.items then re-renders whichever page is currently visible —
@@ -2570,11 +2723,21 @@ const firebaseConfig = {
         S.items = snap.docs.map(d=>({id:d.id,...d.data(), type: normalizeType(d.data().type)}));
         updateBadges();
         if(S.page==='dashboard'){
-          renderDashboard(); // re-render charts/stats in-place, no spinner
+          renderDashboard();
         } else if(S.page==='items'){
-          filterItems();     // re-apply current filters over fresh data
+          filterItems();
+        } else if(S.page==='office'){
+          filterOffice();
+        } else if(S.page==='other'){
+          filterOther();
+        } else if(SEMI_TYPE_PAGE_BY_KEY[S.page]){
+          filterSemiTypePage(S.page);
+        } else if(S.page==='machinery'){
+          filterMachinery();
+        } else if(S.page==='catalog'){
+          filterCatalog();
         } else if(S.page==='dept' && S.dept){
-          filterDeptPage();  // re-render dept table — this was completely missing before
+          filterDeptPage();
         }
       }, err => {
         console.warn('Real-time listener error:', err.message);

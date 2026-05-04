@@ -176,6 +176,26 @@
         All Other Supplies
         <span class="snav-badge" id="badge-other">—</span>
       </button>
+      <button class="snav-btn snav-btn-wrap" id="tab-semiOs" onclick="switchPage('semiOs')">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>
+        <span class="snav-label">All Semi-Expendable Office Supplies</span>
+        <span class="snav-badge" id="badge-semiOs">—</span>
+      </button>
+      <button class="snav-btn snav-btn-wrap" id="tab-semiOt" onclick="switchPage('semiOt')">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>
+        <span class="snav-label">All Semi-Expendable Other's Supplies</span>
+        <span class="snav-badge" id="badge-semiOt">—</span>
+      </button>
+      <button class="snav-btn snav-btn-wrap" id="tab-semiCm" onclick="switchPage('semiCm')">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>
+        <span class="snav-label">All Semi-Expendable Communication Equipments</span>
+        <span class="snav-badge" id="badge-semiCm">—</span>
+      </button>
+      <button class="snav-btn snav-btn-wrap" id="tab-semiMe" onclick="switchPage('semiMe')">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>
+        <span class="snav-label">All Semi-Expendable Machinery Equipments</span>
+        <span class="snav-badge" id="badge-semiMe">—</span>
+      </button>
       <button class="snav-btn" id="tab-machinery" onclick="switchPage('machinery')">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>
         All Machinery
@@ -313,6 +333,186 @@
         <div id="other-table"></div>
       </div>
 
+      <!-- ALL SEMI-EXPENDABLE OFFICE SUPPLIES -->
+      <div class="page" id="page-semiOs">
+        <div class="page-header">
+          <div>
+            <div class="page-title">All <em>Semi-Expendable Office Supplies</em></div>
+            <div class="page-sub">
+              Annual Procurement Plan — All Departments
+              <span class="count-chip" id="semi-os-count"></span>
+            </div>
+          </div>
+          <div class="hdr-actions">
+            <button class="btn btn-outline btn-sm" onclick="printSemiTypePage('semiOs')">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7V3h8v4"/><rect x="3" y="7" width="14" height="8" rx="1.5"/><path d="M6 13h8M6 15v2h8v-2"/></svg>
+              Print All
+            </button>
+            <button class="btn btn-gold btn-sm" onclick="openAddModal()">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+              Add Item
+            </button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg class="search-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M17 17l-3.5-3.5"/></svg>
+            <input class="search-input" id="semi-os-search" placeholder="Search items, departments, types…" oninput="filterSemiTypePage('semiOs')">
+          </div>
+          <select class="filter-sel" id="semi-os-dept" onchange="filterSemiTypePage('semiOs')">
+            <option value="">All Departments</option>
+          </select>
+          <select class="filter-sel" id="semi-os-month" onchange="filterSemiTypePage('semiOs')">
+            <option value="">All Months</option>
+            <option>January</option><option>February</option><option>March</option>
+            <option>April</option><option>May</option><option>June</option>
+            <option>July</option><option>August</option><option>September</option>
+            <option>October</option><option>November</option><option>December</option>
+          </select>
+          <select class="filter-sel" id="semi-os-avail" onchange="filterSemiTypePage('semiOs')">
+            <option value="">All Availability</option>
+            <option value="available">✓ Available</option>
+            <option value="not">✗ Not Available</option>
+          </select>
+        </div>
+        <div id="semi-os-table"></div>
+      </div>
+
+      <!-- ALL SEMI-EXPENDABLE OTHER'S SUPPLIES -->
+      <div class="page" id="page-semiOt">
+        <div class="page-header">
+          <div>
+            <div class="page-title">All <em>Semi-Expendable Other's Supplies</em></div>
+            <div class="page-sub">
+              Annual Procurement Plan — All Departments
+              <span class="count-chip" id="semi-ot-count"></span>
+            </div>
+          </div>
+          <div class="hdr-actions">
+            <button class="btn btn-outline btn-sm" onclick="printSemiTypePage('semiOt')">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7V3h8v4"/><rect x="3" y="7" width="14" height="8" rx="1.5"/><path d="M6 13h8M6 15v2h8v-2"/></svg>
+              Print All
+            </button>
+            <button class="btn btn-gold btn-sm" onclick="openAddModal()">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+              Add Item
+            </button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg class="search-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M17 17l-3.5-3.5"/></svg>
+            <input class="search-input" id="semi-ot-search" placeholder="Search items, departments, types…" oninput="filterSemiTypePage('semiOt')">
+          </div>
+          <select class="filter-sel" id="semi-ot-dept" onchange="filterSemiTypePage('semiOt')">
+            <option value="">All Departments</option>
+          </select>
+          <select class="filter-sel" id="semi-ot-month" onchange="filterSemiTypePage('semiOt')">
+            <option value="">All Months</option>
+            <option>January</option><option>February</option><option>March</option>
+            <option>April</option><option>May</option><option>June</option>
+            <option>July</option><option>August</option><option>September</option>
+            <option>October</option><option>November</option><option>December</option>
+          </select>
+          <select class="filter-sel" id="semi-ot-avail" onchange="filterSemiTypePage('semiOt')">
+            <option value="">All Availability</option>
+            <option value="available">✓ Available</option>
+            <option value="not">✗ Not Available</option>
+          </select>
+        </div>
+        <div id="semi-ot-table"></div>
+      </div>
+
+      <!-- ALL SEMI-EXPENDABLE COMMUNICATION EQUIPMENTS -->
+      <div class="page" id="page-semiCm">
+        <div class="page-header">
+          <div>
+            <div class="page-title">All <em>Semi-Expendable Communication Equipments</em></div>
+            <div class="page-sub">
+              Annual Procurement Plan — All Departments
+              <span class="count-chip" id="semi-cm-count"></span>
+            </div>
+          </div>
+          <div class="hdr-actions">
+            <button class="btn btn-outline btn-sm" onclick="printSemiTypePage('semiCm')">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7V3h8v4"/><rect x="3" y="7" width="14" height="8" rx="1.5"/><path d="M6 13h8M6 15v2h8v-2"/></svg>
+              Print All
+            </button>
+            <button class="btn btn-gold btn-sm" onclick="openAddModal()">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+              Add Item
+            </button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg class="search-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M17 17l-3.5-3.5"/></svg>
+            <input class="search-input" id="semi-cm-search" placeholder="Search items, departments, types…" oninput="filterSemiTypePage('semiCm')">
+          </div>
+          <select class="filter-sel" id="semi-cm-dept" onchange="filterSemiTypePage('semiCm')">
+            <option value="">All Departments</option>
+          </select>
+          <select class="filter-sel" id="semi-cm-month" onchange="filterSemiTypePage('semiCm')">
+            <option value="">All Months</option>
+            <option>January</option><option>February</option><option>March</option>
+            <option>April</option><option>May</option><option>June</option>
+            <option>July</option><option>August</option><option>September</option>
+            <option>October</option><option>November</option><option>December</option>
+          </select>
+          <select class="filter-sel" id="semi-cm-avail" onchange="filterSemiTypePage('semiCm')">
+            <option value="">All Availability</option>
+            <option value="available">✓ Available</option>
+            <option value="not">✗ Not Available</option>
+          </select>
+        </div>
+        <div id="semi-cm-table"></div>
+      </div>
+
+      <!-- ALL SEMI-EXPENDABLE MACHINERY EQUIPMENTS -->
+      <div class="page" id="page-semiMe">
+        <div class="page-header">
+          <div>
+            <div class="page-title">All <em>Semi-Expendable Machinery Equipments</em></div>
+            <div class="page-sub">
+              Annual Procurement Plan — All Departments
+              <span class="count-chip" id="semi-me-count"></span>
+            </div>
+          </div>
+          <div class="hdr-actions">
+            <button class="btn btn-outline btn-sm" onclick="printSemiTypePage('semiMe')">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7V3h8v4"/><rect x="3" y="7" width="14" height="8" rx="1.5"/><path d="M6 13h8M6 15v2h8v-2"/></svg>
+              Print All
+            </button>
+            <button class="btn btn-gold btn-sm" onclick="openAddModal()">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+              Add Item
+            </button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg class="search-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M17 17l-3.5-3.5"/></svg>
+            <input class="search-input" id="semi-me-search" placeholder="Search items, departments, types…" oninput="filterSemiTypePage('semiMe')">
+          </div>
+          <select class="filter-sel" id="semi-me-dept" onchange="filterSemiTypePage('semiMe')">
+            <option value="">All Departments</option>
+          </select>
+          <select class="filter-sel" id="semi-me-month" onchange="filterSemiTypePage('semiMe')">
+            <option value="">All Months</option>
+            <option>January</option><option>February</option><option>March</option>
+            <option>April</option><option>May</option><option>June</option>
+            <option>July</option><option>August</option><option>September</option>
+            <option>October</option><option>November</option><option>December</option>
+          </select>
+          <select class="filter-sel" id="semi-me-avail" onchange="filterSemiTypePage('semiMe')">
+            <option value="">All Availability</option>
+            <option value="available">✓ Available</option>
+            <option value="not">✗ Not Available</option>
+          </select>
+        </div>
+        <div id="semi-me-table"></div>
+      </div>
+
       <!-- ALL MACHINERY -->
       <div class="page" id="page-machinery">
         <div class="page-header">
@@ -430,6 +630,10 @@
           <select class="filter-sel" id="dept-type-filter" onchange="filterDept()">
             <option value="">All Types</option>
             <option>Office Supplies</option><option>Other Supplies</option><option>Machinery</option>
+            <option>Semi-Expendable Office Supplies</option>
+            <option>Semi-Expendable Other's Supplies</option>
+            <option>Semi-Expendable Communication Equipments</option>
+            <option>Semi-Expendable Machinery Equipments</option>
           </select>
           <select class="filter-sel" id="dept-month-filter" onchange="filterDept()">
             <option value="">All Months</option>
@@ -678,7 +882,7 @@
 </div>
 
 <div class="modal-overlay" id="modal-catalog-detail">
-  <div class="modal modal-sm">
+  <div class="modal modal-cat">
     <div class="modal-header">
       <div class="modal-title" id="cat-detail-title">Item Detail</div>
       <button class="modal-close" onclick="closeModal('modal-catalog-detail')">
