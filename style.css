@@ -1337,3 +1337,160 @@ tbody td:last-child { border-right: none; }
   background: rgba(0,0,0,.18); border-radius: 4px; padding: 2px 6px;
   text-transform: uppercase;
 }
+
+/* ═══ PURCHASE HISTORY ═══ */
+
+/* Dept chip — used in item modal and ph page */
+.ph-dept-chip {
+  display: inline-flex; align-items: center;
+  background: rgba(212,146,16,.12); color: var(--gold);
+  border: 1px solid rgba(212,146,16,.25);
+  border-radius: 5px; padding: 2px 8px;
+  font-size: 11px; font-weight: 700; letter-spacing: .4px;
+  text-transform: uppercase; white-space: nowrap;
+}
+
+/* Loading / empty states */
+.ph-loading {
+  font-size: 12px; color: var(--sub);
+  padding: 12px 0 4px; font-style: italic;
+}
+.ph-empty {
+  font-size: 12px; color: var(--sub);
+  padding: 10px 0; font-style: italic;
+}
+.ph-unit { font-size: 10px; color: var(--sub); }
+
+/* Item modal history table */
+.ph-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 12px; margin-top: 6px;
+}
+.ph-table th {
+  text-align: left; font-size: 10px; font-weight: 700;
+  color: var(--sub); letter-spacing: .5px; text-transform: uppercase;
+  padding: 4px 8px 6px; border-bottom: 1px solid var(--bd);
+}
+.ph-table td {
+  padding: 7px 8px; border-bottom: 1px solid var(--bd3);
+  vertical-align: middle;
+}
+.ph-table tbody tr:last-child td { border-bottom: none; }
+.ph-table tbody tr:hover { background: var(--gold-lt); }
+
+/* Full purchase history page */
+.ph-summary-chips {
+  display: flex; flex-wrap: wrap; gap: 9px;
+  margin-bottom: 20px;
+}
+.ph-summary-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--bd);
+  border-radius: 8px; padding: 8px 14px;
+  cursor: pointer; transition: background var(--t1), border-color var(--t1);
+}
+.ph-summary-chip:hover {
+  background: var(--gold-lt); border-color: rgba(212,146,16,.4);
+}
+.ph-chip-total {
+  font-size: 12px; font-weight: 600; color: var(--ink);
+}
+.ph-page-empty {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 60px 20px; color: var(--sub); font-size: 14px;
+  text-align: center;
+}
+.ph-row-num { color: var(--sub); font-size: 11px; width: 32px; }
+.ph-row-item { font-weight: 500; color: var(--ink); max-width: 240px; }
+
+/* Clear history danger button */
+.btn-danger-outline {
+  background: transparent;
+  border: 1px solid rgba(198,40,40,.35);
+  color: #c62828;
+  transition: background var(--t1), border-color var(--t1), color var(--t1);
+  display: inline-flex; align-items: center;
+}
+.btn-danger-outline:hover {
+  background: rgba(198,40,40,.08);
+  border-color: #c62828;
+}
+.ph-clear-history-btn { margin-left: auto; white-space: nowrap; }
+
+/* ── PH Toolbar extra filters ── */
+.ph-toolbar { flex-wrap: wrap; gap: 8px; }
+
+/* Filter summary badge */
+.ph-filter-badge {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-size: 12px; color: var(--sub);
+  background: var(--surface); border: 1px solid var(--bd);
+  border-radius: 7px; padding: 7px 14px;
+  margin-bottom: 12px;
+}
+.ph-filter-badge--all { background: transparent; border-color: transparent; padding-left:0; }
+.ph-clear-btn {
+  background: none; border: 1px solid var(--bd); border-radius: 5px;
+  font-size: 11px; color: var(--sub); cursor: pointer; padding: 2px 9px;
+  transition: background var(--t1), color var(--t1);
+}
+.ph-clear-btn:hover { background: var(--gold-lt); color: var(--gold); border-color: rgba(212,146,16,.4); }
+
+/* Clickable rows */
+.ph-data-table tbody tr.ph-clickable-row { cursor: pointer; transition: background var(--t1); }
+.ph-data-table tbody tr.ph-clickable-row:hover { background: var(--gold-lt); }
+.ph-total-cell { font-weight: 600; color: var(--ink); }
+.ph-view-cell { width: 52px; text-align: center; }
+.ph-view-btn {
+  display: inline-block;
+  font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+  color: var(--gold); background: rgba(212,146,16,.10);
+  border: 1px solid rgba(212,146,16,.25); border-radius: 5px;
+  padding: 2px 8px; pointer-events: none;
+}
+.ph-clickable-row:hover .ph-view-btn { background: rgba(212,146,16,.2); }
+
+/* ── PH Detail Modal ── */
+.ph-detail-wrap { display: flex; flex-direction: column; gap: 16px; }
+.ph-detail-badge-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.ph-detail-date-badge {
+  font-size: 11px; color: var(--sub); font-style: italic;
+}
+.ph-detail-item-name {
+  font-size: 17px; font-weight: 700; color: var(--ink);
+  line-height: 1.3; word-break: break-word;
+}
+.ph-detail-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.ph-detail-card {
+  background: var(--bg); border: 1px solid var(--bd);
+  border-radius: 8px; padding: 12px 14px;
+}
+.ph-detail-card--total {
+  grid-column: 1 / -1;
+  background: rgba(212,146,16,.07); border-color: rgba(212,146,16,.3);
+}
+.ph-detail-card-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .5px;
+  text-transform: uppercase; color: var(--sub); margin-bottom: 4px;
+}
+.ph-detail-card-value { font-size: 15px; font-weight: 600; color: var(--ink); }
+.ph-detail-total { font-size: 18px; color: var(--gold); }
+.ph-detail-meta {
+  background: var(--surface); border: 1px solid var(--bd);
+  border-radius: 8px; overflow: hidden;
+}
+.ph-detail-meta .detail-row {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 9px 14px; border-bottom: 1px solid var(--bd3); gap: 12px;
+}
+.ph-detail-meta .detail-row:last-child { border-bottom: none; }
+.ph-detail-meta .detail-label {
+  font-size: 11px; font-weight: 700; color: var(--sub);
+  text-transform: uppercase; letter-spacing: .4px; white-space: nowrap;
+}
+.ph-detail-meta .detail-value { font-size: 12px; color: var(--ink); text-align: right; }
+.ph-detail-id { font-family: monospace; font-size: 11px; color: var(--sub); word-break: break-all; }

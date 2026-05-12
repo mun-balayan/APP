@@ -809,6 +809,7 @@ const firebaseConfig = {
       else if(SEMI_TYPE_PAGE_BY_KEY[pg]) loadSemiTypePage(SEMI_TYPE_PAGE_BY_KEY[pg]);
       else if(pg==='machinery') loadMachinery();
       else if(pg==='catalog') loadCatalogPage();
+      else if(pg==='purchase-history') loadPurchaseHistoryPage();
     }
     window.switchPage=switchPage;
 
@@ -1173,6 +1174,10 @@ const firebaseConfig = {
           ${dr('Total Amount','₱'+parseFloat(i.total_amount||0).toLocaleString('en-PH',{minimumFractionDigits:2}))}
           ${dr('Availability',i.availability)}
         </div>
+        <div class="detail-section">
+          <div class="detail-section-title"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h14M3 8h10M3 12h7"/><rect x="13" y="10" width="5" height="8" rx="1"/></svg>Purchase History</div>
+          <div id="item-ph-rows"><div class="ph-loading">Loading history…</div></div>
+        </div>
         <div class="form-actions" style="padding-top:12px;border-top:1px solid var(--bdr2);margin-top:4px">
           <button class="btn btn-danger" onclick="confirmDelete('${id}')">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12M8 6V4h4v2M5 6l1 11h8l1-11"/><path d="M8 10v4M12 10v4"/></svg>Delete
@@ -1182,6 +1187,7 @@ const firebaseConfig = {
           </button>
         </div>`;
       openModal('modal-item');
+      loadItemPurchaseHistory(id);
     }
     window.showItemModal=showItemModal;
 
@@ -2157,6 +2163,279 @@ const firebaseConfig = {
       } catch(e){ toast('Failed to update quantities: '+e.message,'error'); return false; }
     }
 
+    // ── Purchase History — save records on PR generation ──
+    async function savePurchaseHistory(cartItems){
+      if(!isOnline) return;
+      try {
+        const batch = writeBatch(db);
+        cartItems.forEach(c => {
+          const ref = doc(collection(db,'purchase_history'));
+          batch.set(ref, {
+            itemId:      c.id,
+            itemName:    c.item || '—',
+            department:  c.department || '—',
+            unit:        c.unit_of_measure || '—',
+            qty:         c.qty,
+            unitPrice:   parseFloat(c.unit_price || 0),
+            totalAmount: parseFloat(c.unit_price || 0) * c.qty,
+            purchasedAt: serverTimestamp(),
+          });
+        });
+        await batch.commit();
+      } catch(e){ console.error('savePurchaseHistory:', e); }
+    }
+
+    // ── Purchase History — load per item (for detail modal) ──
+    async function loadItemPurchaseHistory(itemId){
+      const el = document.getElementById('item-ph-rows');
+      if(!el) return;
+      try {
+        const snap = await getDocs(collection(db,'purchase_history'));
+        const records = [];
+        snap.forEach(d => { const r = d.data(); if(r.itemId === itemId) records.push(r); });
+        records.sort((a,b) => (b.purchasedAt?.seconds||0) - (a.purchasedAt?.seconds||0));
+        if(!records.length){
+          el.innerHTML = `<div class="ph-empty">No purchase history for this item yet.</div>`;
+          return;
+        }
+        el.innerHTML = `
+          <table class="ph-table">
+            <thead><tr>
+              <th>Department</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Date</th>
+            </tr></thead>
+            <tbody>${records.map(r => `<tr>
+              <td><span class="ph-dept-chip">${r.department}</span></td>
+              <td>${r.qty} <span class="ph-unit">${r.unit||''}</span></td>
+              <td>₱${parseFloat(r.unitPrice||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+              <td>₱${parseFloat(r.totalAmount||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+              <td>${r.purchasedAt?.toDate?.()?.toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'})||'—'}</td>
+            </tr>`).join('')}</tbody>
+          </table>`;
+      } catch(e){
+        if(el) el.innerHTML = `<div class="ph-empty">Failed to load history.</div>`;
+      }
+    }
+
+    // ── Purchase History — full page ──
+    async function loadPurchaseHistoryPage(){
+      const el = document.getElementById('ph-page-body');
+      if(!el) return;
+      el.innerHTML = `<div class="loading"><div class="loading-spinner"></div><br>Loading purchase history…</div>`;
+      try {
+        const snap = await getDocs(collection(db,'purchase_history'));
+        const records = [];
+        snap.forEach(d => records.push({ ...d.data(), _id: d.id }));
+        records.sort((a,b) => (b.purchasedAt?.seconds||0) - (a.purchasedAt?.seconds||0));
+
+        if(!records.length){
+          el.innerHTML = `<div class="ph-page-empty"><div style="font-size:2.5rem;margin-bottom:12px">📋</div><div>No purchase history yet.</div><div style="font-size:12px;color:var(--sub);margin-top:6px">History is recorded each time a Purchase Request is generated.</div></div>`;
+          return;
+        }
+
+        // Group by department for summary chips
+        const deptTotals = {};
+        records.forEach(r => {
+          deptTotals[r.department] = (deptTotals[r.department]||0) + r.totalAmount;
+        });
+
+        // Build filter dropdowns content
+        const allDepts = [...new Set(records.map(r=>r.department))].sort();
+        const allItems = [...new Set(records.map(r=>r.itemName))].sort();
+
+        // Collect unique months and years from purchasedAt
+        const allYears  = [...new Set(records.map(r => r.purchasedAt?.toDate?.()?.getFullYear()).filter(Boolean))].sort((a,b)=>b-a);
+        const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+        el.innerHTML = `
+          <div class="ph-summary-chips" id="ph-dept-chips">
+            ${allDepts.map(d=>`<div class="ph-summary-chip" onclick="phFilterDept('${ea(d)}')">
+              <span class="ph-dept-chip">${d}</span>
+              <span class="ph-chip-total">₱${(deptTotals[d]||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</span>
+            </div>`).join('')}
+          </div>
+          <div class="toolbar ph-toolbar" style="margin-bottom:16px">
+            <div class="search-wrap">
+              <svg class="search-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M17 17l-3.5-3.5"/></svg>
+              <input class="search-input" id="ph-search" placeholder="Search item name…" oninput="phApplyFilter()">
+            </div>
+            <select class="filter-sel" id="ph-dept-filter" onchange="phApplyFilter()">
+              <option value="">All Departments</option>
+              ${allDepts.map(d=>`<option value="${ea(d)}">${d}</option>`).join('')}
+            </select>
+            <select class="filter-sel" id="ph-item-filter" onchange="phApplyFilter()">
+              <option value="">All Items</option>
+              ${allItems.map(it=>`<option value="${ea(it)}">${it}</option>`).join('')}
+            </select>
+            <select class="filter-sel" id="ph-month-filter" onchange="phApplyFilter()">
+              <option value="">All Months</option>
+              ${MONTH_NAMES.map((m,i)=>`<option value="${i}">${m}</option>`).join('')}
+            </select>
+            <select class="filter-sel" id="ph-year-filter" onchange="phApplyFilter()">
+              <option value="">All Years</option>
+              ${allYears.map(y=>`<option value="${y}">${y}</option>`).join('')}
+            </select>
+            ${window._currentUserPrivs?.canClearHistory ? `
+            <button class="btn btn-danger-outline btn-sm ph-clear-history-btn" onclick="clearPurchaseHistory()" title="Permanently delete all purchase history records">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:13px;height:13px;margin-right:5px"><polyline points="3 6 5 6 19 6"/><path d="M8 6V4h4v2M19 6l-1 12a2 2 0 01-2 2H6a2 2 0 01-2-2L3 6"/><line x1="10" y1="11" x2="10" y2="15"/><line x1="14" y1="11" x2="14" y2="15"/></svg>
+              Clear History
+            </button>` : ''}
+          </div>
+          <div class="ph-filter-summary" id="ph-filter-summary"></div>
+          <div id="ph-table-wrap"></div>`;
+
+        // Store records globally for filter
+        window._phRecords = records;
+        phApplyFilter();
+      } catch(e){
+        el.innerHTML = `<div class="ph-page-empty">Failed to load purchase history.</div>`;
+      }
+    }
+
+    window.phFilterDept = function(dept){
+      const sel = document.getElementById('ph-dept-filter');
+      if(sel){ sel.value = dept; phApplyFilter(); }
+    };
+
+    window.phApplyFilter = function(){
+      const records = window._phRecords || [];
+      const search  = (document.getElementById('ph-search')?.value||'').toLowerCase();
+      const dept    = document.getElementById('ph-dept-filter')?.value||'';
+      const item    = document.getElementById('ph-item-filter')?.value||'';
+      const month   = document.getElementById('ph-month-filter')?.value;  // '' or '0'-'11'
+      const year    = document.getElementById('ph-year-filter')?.value||'';
+      const wrap    = document.getElementById('ph-table-wrap');
+      if(!wrap) return;
+      const filtered = records.filter(r => {
+        if(dept   && r.department !== dept)   return false;
+        if(item   && r.itemName   !== item)   return false;
+        if(search && !r.itemName.toLowerCase().includes(search)) return false;
+        if(month !== '' || year){
+          const d = r.purchasedAt?.toDate?.();
+          if(!d) return false;
+          if(month !== '' && d.getMonth() !== parseInt(month)) return false;
+          if(year  && d.getFullYear() !== parseInt(year))      return false;
+        }
+        return true;
+      });
+
+      // Update filter summary badge
+      const summary = document.getElementById('ph-filter-summary');
+      if(summary){
+        const totalAmt = filtered.reduce((s,r)=>s+(r.totalAmount||0),0);
+        summary.innerHTML = filtered.length < records.length
+          ? `<div class="ph-filter-badge">Showing <strong>${filtered.length}</strong> of ${records.length} records &nbsp;·&nbsp; Total: <strong>₱${totalAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</strong> <button class="ph-clear-btn" onclick="phClearFilters()">✕ Clear filters</button></div>`
+          : `<div class="ph-filter-badge ph-filter-badge--all">${records.length} records &nbsp;·&nbsp; Total: <strong>₱${totalAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</strong></div>`;
+      }
+
+      if(!filtered.length){
+        wrap.innerHTML = `<div class="ph-empty" style="padding:32px 0">No records match your filter.</div>`;
+        return;
+      }
+      wrap.innerHTML = `
+        <div class="tbl-wrap">
+          <table class="data-table ph-data-table">
+            <thead><tr>
+              <th>#</th><th>Item Name</th><th>Department</th>
+              <th>Qty</th><th>Unit Price</th><th>Total</th><th>Date</th>
+              <th></th>
+            </tr></thead>
+            <tbody>${filtered.map((r,i)=>`<tr class="ph-clickable-row" onclick="openPHDetail('${ea(r._id)}')" title="View details">
+              <td class="ph-row-num">${i+1}</td>
+              <td class="ph-row-item">${r.itemName}</td>
+              <td><span class="ph-dept-chip">${r.department}</span></td>
+              <td>${r.qty} <span class="ph-unit">${r.unit||''}</span></td>
+              <td>₱${parseFloat(r.unitPrice||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+              <td class="ph-total-cell">₱${parseFloat(r.totalAmount||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+              <td>${r.purchasedAt?.toDate?.()?.toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'})||'—'}</td>
+              <td class="ph-view-cell"><span class="ph-view-btn">View</span></td>
+            </tr>`).join('')}</tbody>
+          </table>
+        </div>`;
+    };
+
+    window.phClearFilters = function(){
+      const ids = ['ph-search','ph-dept-filter','ph-item-filter','ph-month-filter','ph-year-filter'];
+      ids.forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+      phApplyFilter();
+    };
+
+    window.clearPurchaseHistory = async function(){
+      // Double-guard: re-check privilege at call time, not just at render time
+      if(!window._currentUserPrivs?.canClearHistory){
+        toast('You do not have permission to clear purchase history.', 'error');
+        return;
+      }
+      // First confirmation
+      if(!confirm('⚠️ Clear ALL purchase history?\n\nThis will permanently delete every purchase record. This action cannot be undone.\n\nClick OK to proceed to the final confirmation.')) return;
+      // Second confirmation with typed confirmation
+      const answer = prompt('Type DELETE to confirm. All purchase history records will be erased.');
+      if((answer||'').trim() !== 'DELETE'){
+        toast('Cancelled — type DELETE exactly to confirm.', 'error');
+        return;
+      }
+      const btn = document.querySelector('.ph-clear-history-btn');
+      if(btn){ btn.disabled=true; btn.textContent='Clearing…'; }
+      try {
+        const snap = await getDocs(collection(db,'purchase_history'));
+        if(snap.empty){ toast('Purchase history is already empty.'); return; }
+        // Delete in batches of 500 (Firestore writeBatch limit)
+        const ids = snap.docs.map(d=>d.id);
+        const CHUNK = 499;
+        for(let i=0; i<ids.length; i+=CHUNK){
+          const batch = writeBatch(db);
+          ids.slice(i,i+CHUNK).forEach(id => batch.delete(doc(db,'purchase_history',id)));
+          await batch.commit();
+        }
+        window._phRecords = [];
+        toast(`✓ Cleared ${ids.length} purchase history record${ids.length===1?'':'s'}.`);
+        loadPurchaseHistoryPage(); // reload the page to reflect empty state
+      } catch(e){
+        toast('Failed to clear history: '+e.message, 'error');
+        if(btn){ btn.disabled=false; btn.textContent='Clear History'; }
+      }
+    };
+
+    window.openPHDetail = function(id){
+      const r = (window._phRecords||[]).find(x=>x._id===id);
+      if(!r) return;
+      const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const d = r.purchasedAt?.toDate?.();
+      const dateStr = d ? d.toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}) : '—';
+      const timeStr = d ? d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'}) : '';
+      const body = document.getElementById('ph-detail-body');
+      const title = document.getElementById('ph-detail-title');
+      if(title) title.textContent = 'Purchase Record';
+      if(body) body.innerHTML = `
+        <div class="ph-detail-wrap">
+          <div class="ph-detail-badge-row">
+            <span class="ph-dept-chip">${ea(r.department)}</span>
+            <span class="ph-detail-date-badge">${dateStr}${timeStr ? ' · '+timeStr : ''}</span>
+          </div>
+          <div class="ph-detail-item-name">${ea(r.itemName)}</div>
+          <div class="ph-detail-grid">
+            <div class="ph-detail-card">
+              <div class="ph-detail-card-label">Quantity</div>
+              <div class="ph-detail-card-value">${r.qty} <span class="ph-unit">${r.unit||''}</span></div>
+            </div>
+            <div class="ph-detail-card">
+              <div class="ph-detail-card-label">Unit Price</div>
+              <div class="ph-detail-card-value">₱${parseFloat(r.unitPrice||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</div>
+            </div>
+            <div class="ph-detail-card ph-detail-card--total">
+              <div class="ph-detail-card-label">Total Amount</div>
+              <div class="ph-detail-card-value ph-detail-total">₱${parseFloat(r.totalAmount||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</div>
+            </div>
+          </div>
+          <div class="ph-detail-meta">
+            <div class="detail-row"><span class="detail-label">Unit of Measure</span><span class="detail-value">${ea(r.unit||'—')}</span></div>
+            <div class="detail-row"><span class="detail-label">Item ID</span><span class="detail-value ph-detail-id">${ea(r.itemId||'—')}</span></div>
+            <div class="detail-row"><span class="detail-label">Record ID</span><span class="detail-value ph-detail-id">${ea(r._id||'—')}</span></div>
+            <div class="detail-row"><span class="detail-label">Purchased On</span><span class="detail-value">${dateStr}${timeStr ? ', '+timeStr : ''}</span></div>
+          </div>
+        </div>`;
+      document.getElementById('modal-ph-detail')?.classList.add('open');
+    };
+
     function buildPRHTML(cartItems){
       const fmtC = n => '₱'+n.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
       const today = new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
@@ -2648,9 +2927,10 @@ const firebaseConfig = {
       win.document.write(html);
       win.document.close();
 
-      // Deduct quantities in Firestore
+      // Deduct quantities in Firestore & save purchase history
       const ok = await deductCartQuantities();
       if(ok){
+        await savePurchaseHistory(CART);
         toast(`PR generated! Quantities updated for ${CART.length} item(s).`, 'success');
         CART = [];
         updateCartBadge();
@@ -2879,6 +3159,7 @@ const firebaseConfig = {
     }
 
     let _appEntered = false;
+    window._currentUserPrivs = {};  // cleared on logout, loaded after login
 
     function enterApp(){
       if(_appEntered) return;
@@ -2894,6 +3175,7 @@ const firebaseConfig = {
 
     function leaveApp(){
       _appEntered = false;
+      window._currentUserPrivs = {};  // wipe privileges on logout
       if(_unsubItems){ _unsubItems(); _unsubItems=null; }
       document.getElementById('shell').style.display='none';
       document.getElementById('login-screen').style.display='';
@@ -2958,6 +3240,24 @@ const firebaseConfig = {
       const snap = await getDoc(userDocRef(user.uid));
       if(!snap.exists()) return true;
       return snap.data().approved !== false;
+    }
+
+    /** Reads privilege flags from users/{uid} and stores them in window._currentUserPrivs.
+     *  Currently supported flags:
+     *    canClearHistory: true  — allows the user to wipe the purchase_history collection.
+     *  To grant a privilege, set the field in Firestore Console → users → {uid} doc.
+     */
+    async function loadUserPrivileges(user){
+      try {
+        const snap = await getDoc(userDocRef(user.uid));
+        window._currentUserPrivs = snap.exists() ? (snap.data().privileges || {}) : {};
+        // Also promote top-level shorthand flags for backwards-compat
+        const d = snap.exists() ? snap.data() : {};
+        if(d.canClearHistory) window._currentUserPrivs.canClearHistory = true;
+      } catch(e){
+        window._currentUserPrivs = {};
+        console.warn('loadUserPrivileges:', e);
+      }
     }
 
     window.doLogin = async function(){
@@ -3308,6 +3608,7 @@ const firebaseConfig = {
             return;
           }
           enterApp();
+          loadUserPrivileges(user); // non-blocking; privileges available after short async
         } catch(err){
           console.warn(err);
           await signOut(auth);

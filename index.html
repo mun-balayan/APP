@@ -206,6 +206,10 @@
         <span class="snav-label">Item Catalog</span>
         <span class="snav-badge" id="badge-catalog">—</span>
       </button>
+      <button class="snav-btn" id="tab-purchase-history" onclick="switchPage('purchase-history')">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h1.5l2.5 9h8l2-6H6"/><circle cx="9" cy="17" r="1.2"/><circle cx="15" cy="17" r="1.2"/></svg>
+        <span class="snav-label">Purchase History</span>
+      </button>
 
       <div class="sidebar-sep"></div>
 
@@ -685,6 +689,19 @@
         <div id="catalog-table"></div>
       </div>
 
+      <!-- PURCHASE HISTORY -->
+      <div class="page" id="page-purchase-history">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Purchase <em>History</em></div>
+            <div class="page-sub">Records of all generated Purchase Requests — per item, per department</div>
+          </div>
+        </div>
+        <div id="ph-page-body">
+          <div class="loading"><div class="loading-spinner"></div><br>Loading purchase history…</div>
+        </div>
+      </div>
+
     </div><!-- /#content -->
 
   </div><!-- /#content-wrap -->
@@ -902,6 +919,19 @@
       </button>
     </div>
     <div class="modal-body" id="cat-form-body"></div>
+  </div>
+</div>
+
+<!-- ═══ PURCHASE HISTORY DETAIL MODAL ═══ -->
+<div class="modal-overlay" id="modal-ph-detail">
+  <div class="modal modal-sm" role="dialog" aria-labelledby="ph-detail-title" aria-modal="true">
+    <div class="modal-header">
+      <div class="modal-title" id="ph-detail-title">Purchase Record</div>
+      <button class="modal-close" onclick="closeModal('modal-ph-detail')" aria-label="Close">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="ph-detail-body"></div>
   </div>
 </div>
 
