@@ -60,6 +60,10 @@ const firebaseConfig = {
     let   DEPTS = [...BUILTIN_DEPTS]; // Will be extended by Firestore depts
     let   CUSTOM_DEPT_DOCS = []; // [{id, name}] for Firestore-stored depts
 
+    // ── Procurement Year ──
+    let APP_YEAR = new Date().getFullYear();
+    const appSettingsDoc = () => doc(db, 'app_settings', 'global');
+
     const TYPE_SEMI_OFFICE = 'Semi-Expendable Office Supplies';
     const TYPE_SEMI_OTHER  = "Semi-Expendable Other's Supplies";
     const TYPE_SEMI_COMM   = 'Semi-Expendable Communication Equipments';
@@ -349,15 +353,21 @@ const firebaseConfig = {
       const body = document.getElementById('dept-list-body');
       body.innerHTML = `<div class="dept-list">
         ${DEPTS.map(d=>{
+          const dSafe = ea(d);
           const cnt = S.items.filter(i=>i.department===d).length;
-          return `<div class="dept-list-item">
+          return `<div class="dept-list-item" id="dlrow-${dSafe}">
             <div class="dept-list-info">
-              <div class="dept-list-name" id="dlname-${d}">${d}</div>
-              <div class="dept-list-meta">${cnt} item${cnt!==1?'s':''} · built-in</div>
+              <div class="dept-list-name" id="dlname-${dSafe}">${dSafe}</div>
+              <div class="dept-list-meta">${cnt} item${cnt!==1?'s':''}</div>
             </div>
-            <button class="dept-rename-btn" onclick="startRenameDept('${d}')" title="Rename">
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M13.5 3.5a2.12 2.12 0 013 3L7 16H4v-3L13.5 3.5z"/></svg>
-            </button>
+            <div style="display:flex;gap:6px;align-items:center">
+              <button class="dept-rename-btn" onclick="startRenameDept('${dSafe}')" title="Rename">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M13.5 3.5a2.12 2.12 0 013 3L7 16H4v-3L13.5 3.5z"/></svg>
+              </button>
+              <button class="dept-delete-btn" onclick="startDeleteDept('${dSafe}')" title="Delete department">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" width="13" height="13"><path d="M4 6h12M8 6V4h4v2M5 6l1 11h8l1-11"/></svg>
+              </button>
+            </div>
           </div>`;
         }).join('')}
       </div>`;
@@ -414,6 +424,66 @@ const firebaseConfig = {
     }
     window.confirmRenameDept = confirmRenameDept;
 
+    // ── Delete Department (double verification) ──
+    window.startDeleteDept = function(deptName){
+      const row = document.getElementById(`dlrow-${deptName}`);
+      if(!row) return;
+      const cnt = S.items.filter(i=>i.department===deptName).length;
+      row.innerHTML = `
+        <div class="dept-delete-confirm" style="width:100%">
+          <div class="dept-delete-warn">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" width="14" height="14"><path d="M10 2l8 16H2L10 2z"/><path d="M10 8v4M10 14v.5"/></svg>
+            Delete <strong>${deptName}</strong>? This will permanently remove <strong>${cnt} item${cnt!==1?'s':''}</strong> from this department.
+          </div>
+          <div style="font-size:11.5px;color:var(--ink3);margin:8px 0 6px">Type <strong style="color:var(--red)">${deptName}</strong> to confirm:</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="form-input dept-rename-input" id="del-confirm-input-${deptName}"
+              placeholder="Type department name…" maxlength="30" style="flex:1;padding:6px 10px;font-size:13px"
+              oninput="document.getElementById('del-confirm-btn-${deptName}').disabled=(this.value.trim().toUpperCase()!=='${deptName}')">
+            <button class="btn btn-danger btn-sm" id="del-confirm-btn-${deptName}" disabled
+              onclick="confirmDeleteDept('${deptName}')">Delete</button>
+            <button class="btn btn-outline btn-sm" onclick="renderDeptList()">Cancel</button>
+          </div>
+        </div>`;
+      document.getElementById(`del-confirm-input-${deptName}`)?.focus();
+    };
+
+    async function confirmDeleteDept(deptName){
+      const inp = document.getElementById(`del-confirm-input-${deptName}`);
+      if((inp?.value||'').trim().toUpperCase() !== deptName){
+        toast('Name does not match', 'error'); return;
+      }
+      if(!isOnline){ toast('Offline. Cannot delete.','error'); return; }
+      try {
+        // Delete all procurement items for this dept in batches
+        const allItems = S.items.filter(i=>i.department===deptName);
+        for(let i=0;i<allItems.length;i+=499){
+          const batch = writeBatch(db);
+          allItems.slice(i,i+499).forEach(it=>batch.delete(doc(db,'procurement_items',it.id)));
+          await batch.commit();
+        }
+        // Delete or update Firestore dept doc
+        const existing = CUSTOM_DEPT_DOCS.find(x=>x.name===deptName);
+        if(existing){
+          await deleteDoc(doc(db,'app_departments',existing.id));
+          CUSTOM_DEPT_DOCS = CUSTOM_DEPT_DOCS.filter(x=>x.id!==existing.id);
+        }
+        // Remove from arrays
+        const idx = DEPTS.indexOf(deptName);
+        if(idx>=0) DEPTS.splice(idx,1);
+        const bi = BUILTIN_DEPTS.indexOf(deptName);
+        if(bi>=0) BUILTIN_DEPTS.splice(bi,1);
+        window._DEPTS_REF = DEPTS;
+        renderDeptNav();
+        updateFilterDepts();
+        renderDeptList();
+        updateBadges();
+        toast(`Department "${deptName}" and ${allItems.length} item${allItems.length!==1?'s':''} deleted.`, 'success');
+        if(S.dept===deptName){ switchPage('dashboard'); }
+      } catch(e){ toast('Error: '+e.message,'error'); }
+    }
+    window.confirmDeleteDept = confirmDeleteDept;
+
     async function saveDept(){
       const nameInput = document.getElementById('new-dept-name');
       const name = (nameInput.value||'').trim().toUpperCase();
@@ -435,6 +505,51 @@ const firebaseConfig = {
       } catch(e){ toast('Error: '+e.message,'error'); }
     }
     window.saveDept = saveDept;
+
+    // ── App Settings (Procurement Year) ──
+    async function loadAppSettings(){
+      try {
+        const snap = await getDoc(appSettingsDoc());
+        if(snap.exists() && snap.data().procurementYear){
+          APP_YEAR = parseInt(snap.data().procurementYear) || new Date().getFullYear();
+        }
+      } catch(_){}
+      updateYearUI();
+    }
+
+    function updateYearUI(){
+      const chip = document.getElementById('year-chip');
+      if(chip) chip.textContent = `FY ${APP_YEAR}`;
+      // Update all static page-sub year spans
+      document.querySelectorAll('.fy-year-span').forEach(el => el.textContent = APP_YEAR);
+    }
+
+    window.openYearModal = function(){
+      const inp = document.getElementById('year-modal-input');
+      if(inp) inp.value = APP_YEAR;
+      const err = document.getElementById('year-modal-err');
+      if(err){ err.style.display='none'; err.textContent=''; }
+      openModal('modal-year');
+      setTimeout(()=>{ if(inp) inp.focus(); }, 80);
+    };
+
+    window.saveAppYear = async function(){
+      const inp = document.getElementById('year-modal-input');
+      const err = document.getElementById('year-modal-err');
+      const yr = parseInt((inp?.value||'').trim());
+      if(!yr || yr < 2000 || yr > 2100){
+        if(err){ err.textContent='Enter a valid year (2000–2100).'; err.style.display='block'; }
+        return;
+      }
+      if(!isOnline){ if(err){ err.textContent='Offline. Cannot save.'; err.style.display='block'; } return; }
+      try {
+        await setDoc(appSettingsDoc(), { procurementYear: yr }, { merge: true });
+        APP_YEAR = yr;
+        updateYearUI();
+        closeModal('modal-year');
+        toast(`Procurement year set to ${yr}`, 'success');
+      } catch(e){ if(err){ err.textContent='Error: '+e.message; err.style.display='block'; } }
+    };
 
     // Silent dept adder for importer auto-registration
     window._DEPTS_REF = DEPTS;
@@ -996,7 +1111,7 @@ const firebaseConfig = {
       S.officeAvail=document.getElementById('office-avail').value;
       const list=filteredOffice();
       document.getElementById('office-count').textContent=`${list.length} record${list.length!==1?'s':''}`;
-      renderTable(list,'office-table',true);
+      renderAggregatedTable(list,'office-table');
     }
     window.filterOffice=filterOffice;
 
@@ -1017,7 +1132,7 @@ const firebaseConfig = {
       S.otherAvail=document.getElementById('other-avail').value;
       const list=filteredOther();
       document.getElementById('other-count').textContent=`${list.length} record${list.length!==1?'s':''}`;
-      renderTable(list,'other-table',true);
+      renderAggregatedTable(list,'other-table');
     }
     window.filterOther=filterOther;
 
@@ -1038,7 +1153,7 @@ const firebaseConfig = {
       S.machineryAvail=document.getElementById('machinery-avail').value;
       const list=filteredMachinery();
       document.getElementById('machinery-count').textContent=`${list.length} record${list.length!==1?'s':''}`;
-      renderTable(list,'machinery-table',true);
+      renderAggregatedTable(list,'machinery-table');
     }
     window.filterMachinery=filterMachinery;
 
@@ -1060,7 +1175,7 @@ const firebaseConfig = {
       S[def.ak]=document.getElementById(`${def.slug}-avail`).value;
       const list=filteredSemiTypePage(def);
       document.getElementById(`${def.slug}-count`).textContent=`${list.length} record${list.length!==1?'s':''}`;
-      renderTable(list,`${def.slug}-table`,true);
+      renderAggregatedTable(list,`${def.slug}-table`);
     }
     window.filterSemiTypePage=filterSemiTypePage;
 
@@ -1157,7 +1272,119 @@ const firebaseConfig = {
       </tbody></table></div>`;
     }
 
-    // ── Detail modal ──
+    // ── Aggregated table for "All" category views ──
+    // Groups items by name → shows one row per unique item; click → dept breakdown modal
+    function renderAggregatedTable(list, tableId){
+      const el = document.getElementById(tableId);
+      if(!list.length){
+        el.innerHTML=`<div class="empty"><div class="empty-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg></div><div class="empty-text">No items found.</div><button class="btn btn-gold btn-sm" onclick="openAddModal()">Add First Item</button></div>`;
+        return;
+      }
+      // Group by item name (case-insensitive key, but display original)
+      const groups = {};
+      list.forEach(i=>{
+        const key = (i.item||'—').toLowerCase().trim();
+        if(!groups[key]){
+          groups[key] = { item: i.item||'—', type: i.type, unit_of_measure: i.unit_of_measure||'—', unit_price: parseFloat(i.unit_price||0), totalQty: 0, totalAmt: 0, depts: new Set(), records: [], allAvail: true };
+        }
+        const g = groups[key];
+        const qty = parseFloat(i.quantity||0);
+        const amt = parseFloat(i.total_amount||0);
+        g.totalQty += qty;
+        g.totalAmt += amt;
+        g.depts.add(i.department||'—');
+        g.records.push(i);
+        if((i.availability||'').toLowerCase().includes('not')) g.allAvail = false;
+      });
+      const grouped = Object.values(groups);
+
+      el.innerHTML=`<div class="table-wrap"><table><thead><tr>
+        <th>Item</th><th>Type</th><th>Departments</th>
+        <th>Unit</th><th>Unit Price</th><th>Total Qty</th><th>Total Amount</th><th>Status</th>
+      </tr></thead><tbody>
+        ${grouped.map((g,idx)=>`<tr class="agg-row" onclick="showItemGroupModal(${idx}, '${tableId}')">
+          <td class="td-item">${g.item}</td>
+          <td>${tBadge(g.type)}</td>
+          <td class="td-muted"><span class="dept-count-chip">${g.depts.size} dept${g.depts.size!==1?'s':''}</span></td>
+          <td class="td-muted">${g.unit_of_measure}</td>
+          <td class="td-mono">₱${g.unit_price.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+          <td class="td-muted agg-qty">${g.totalQty}</td>
+          <td class="td-amount">₱${g.totalAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+          <td>${g.allAvail?'<span class="badge badge-green">Available</span>':'<span class="badge badge-red">Not Available</span>'}</td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+
+      // Store grouped data on the element for modal access
+      el._aggGroups = grouped;
+    }
+
+    window.showItemGroupModal = function(idx, tableId){
+      const el = document.getElementById(tableId);
+      const grouped = el?._aggGroups;
+      if(!grouped) return;
+      const g = grouped[idx];
+      if(!g) return;
+
+      // Build per-dept breakdown table
+      const Q1K=['qty_jan','qty_feb','qty_mar'], Q2K=['qty_apr','qty_may','qty_jun'];
+      const Q3K=['qty_jul','qty_aug','qty_sep'], Q4K=['qty_oct','qty_nov','qty_dec'];
+      const qSum = (rec, keys) => keys.reduce((s,k)=>s+(parseFloat(rec[k]||0)),0);
+
+      // Group records by department
+      const deptMap = {};
+      g.records.forEach(r=>{
+        const d = r.department||'—';
+        if(!deptMap[d]) deptMap[d] = { q1:0, q2:0, q3:0, q4:0, avail: r.availability, records:[] };
+        deptMap[d].q1 += qSum(r,Q1K);
+        deptMap[d].q2 += qSum(r,Q2K);
+        deptMap[d].q3 += qSum(r,Q3K);
+        deptMap[d].q4 += qSum(r,Q4K);
+        deptMap[d].records.push(r);
+      });
+
+      const fc = n => n>0 ? `<span class="da-qty">${n}</span>` : `<span class="da-zero">—</span>`;
+      const deptRows = Object.entries(deptMap).map(([d,v])=>{
+        const tot = v.q1+v.q2+v.q3+v.q4;
+        const isNotAvail = (v.avail||'').toLowerCase().includes('not');
+        return `<tr class="da-row">
+          <td class="da-dept"><span class="da-dept-dot${isNotAvail?' da-dot-red':''}"></span>${d}</td>
+          <td class="da-cell">${fc(v.q1)}</td><td class="da-cell">${fc(v.q2)}</td>
+          <td class="da-cell">${fc(v.q3)}</td><td class="da-cell">${fc(v.q4)}</td>
+          <td class="da-cell da-total">${fc(tot)}</td>
+        </tr>`;
+      }).join('');
+
+      document.getElementById('item-modal-title').textContent = g.item;
+      document.getElementById('item-modal-body').innerHTML = `
+        <div class="detail-section">
+          <div class="detail-section-title"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="2" width="14" height="16" rx="1.5"/><path d="M7 6h6M7 9h6M7 12h4"/></svg>Item Details</div>
+          ${dr('Supply Category', normalizeType(g.type))}
+          ${dr('Unit of Measure', g.unit_of_measure)}
+          ${dr('Unit Price', '₱'+g.unit_price.toLocaleString('en-PH',{minimumFractionDigits:2}))}
+          ${dr('Total Quantity (All Depts)', g.totalQty)}
+          ${dr('Total Amount (All Depts)', '₱'+g.totalAmt.toLocaleString('en-PH',{minimumFractionDigits:2}))}
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 5h16M2 10h10M2 15h6"/><circle cx="15" cy="14" r="4"/><path d="M13 14h2v2"/></svg>
+            Department Breakdown — FY <span class="fy-year-span">${APP_YEAR}</span>
+          </div>
+          <div class="da-table-wrap">
+            <table class="da-table">
+              <thead>
+                <tr>
+                  <th class="da-th-dept">Department</th>
+                  <th class="da-th">Q1</th><th class="da-th">Q2</th>
+                  <th class="da-th">Q3</th><th class="da-th">Q4</th>
+                  <th class="da-th da-th-total">Total</th>
+                </tr>
+              </thead>
+              <tbody>${deptRows}</tbody>
+            </table>
+          </div>
+        </div>`;
+      openModal('modal-item');
+    };
     function showItemModal(id){
       const i=S.items.find(x=>x.id===id); if(!i) return;
       document.getElementById('item-modal-title').textContent=i.item||'Item';
@@ -3622,6 +3849,7 @@ const firebaseConfig = {
 
     // ── Bootstrap ──
     async function init(){
+      await loadAppSettings();
       await loadDepts();
       loadDashboard();
       loadItemCatalog();

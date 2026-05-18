@@ -1494,3 +1494,45 @@ tbody td:last-child { border-right: none; }
 }
 .ph-detail-meta .detail-value { font-size: 12px; color: var(--ink); text-align: right; }
 .ph-detail-id { font-family: monospace; font-size: 11px; color: var(--sub); word-break: break-all; }
+
+/* ══ Year Chip ══ */
+.year-chip-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(212,146,16,.13); border: 1.5px solid rgba(212,146,16,.35);
+  color: var(--gold); border-radius: 20px; padding: 4px 14px;
+  font-size: 12.5px; font-weight: 700; letter-spacing: .5px;
+  cursor: pointer; transition: background .15s, border-color .15s;
+  font-family: var(--ff);
+}
+.year-chip-btn:hover { background: rgba(212,146,16,.22); border-color: var(--gold); }
+
+/* ══ Dept Delete Button ══ */
+.dept-delete-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(192,39,26,.3);
+  background: transparent; color: var(--red,#C0271A); cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.dept-delete-btn:hover { background: rgba(192,39,26,.12); border-color: var(--red,#C0271A); }
+
+/* ══ Dept Delete Confirm UI ══ */
+.dept-delete-confirm { padding: 10px 0; width: 100%; }
+.dept-delete-warn {
+  display: flex; align-items: flex-start; gap: 8px;
+  background: rgba(192,39,26,.08); border: 1px solid rgba(192,39,26,.2);
+  border-radius: 7px; padding: 10px 12px;
+  font-size: 12.5px; color: var(--ink); line-height: 1.5;
+}
+.dept-delete-warn svg { flex-shrink: 0; margin-top: 1px; color: var(--red,#C0271A); }
+
+/* ══ Aggregated table rows ══ */
+.agg-row { cursor: pointer; }
+.agg-row:hover td { background: rgba(255,255,255,.04); }
+.agg-qty { font-weight: 700; color: var(--ink); }
+.dept-count-chip {
+  display: inline-flex; align-items: center;
+  background: rgba(59,130,246,.12); border: 1px solid rgba(59,130,246,.25);
+  color: #60a5fa; border-radius: 10px; padding: 2px 8px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: .3px;
+}
+.da-dot-red { background: var(--red,#C0271A) !important; }

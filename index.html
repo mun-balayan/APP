@@ -131,7 +131,11 @@
     </div>
   </div>
 
-  <div id="topbar-center"></div>
+  <div id="topbar-center">
+    <button id="year-chip" class="year-chip-btn" onclick="openYearModal()" title="Click to change procurement year">
+      FY <span class="fy-year-span">—</span>
+    </button>
+  </div>
 
   <div class="tb-right">
     <div class="tb-clock" id="topbar-clock"></div>
@@ -222,7 +226,7 @@
 
     <div class="sidebar-footer">
       <div class="sidebar-footer-info">
-        <div class="sidebar-footer-label">APP-CSE v30</div>
+        <div class="sidebar-footer-label">APP-CSE v33</div>
         <div class="sidebar-footer-sub">Municipality of Balayan</div>
       </div>
       <div class="sidebar-footer-dot" title="Online"></div>
@@ -253,7 +257,7 @@
           <div>
             <div class="page-title">All <em>Office Supplies</em></div>
             <div class="page-sub">
-              Annual Procurement Plan — All Departments
+              Annual Procurement Plan — FY <span class="fy-year-span">—</span> — All Departments
               <span class="count-chip" id="office-count"></span>
             </div>
           </div>
@@ -298,7 +302,7 @@
           <div>
             <div class="page-title">All <em>Other Supplies</em></div>
             <div class="page-sub">
-              Annual Procurement Plan — All Departments
+              Annual Procurement Plan — FY <span class="fy-year-span">—</span> — All Departments
               <span class="count-chip" id="other-count"></span>
             </div>
           </div>
@@ -343,7 +347,7 @@
           <div>
             <div class="page-title">All <em>Semi-Expendable Office Supplies</em></div>
             <div class="page-sub">
-              Annual Procurement Plan — All Departments
+              Annual Procurement Plan — FY <span class="fy-year-span">—</span> — All Departments
               <span class="count-chip" id="semi-os-count"></span>
             </div>
           </div>
@@ -388,7 +392,7 @@
           <div>
             <div class="page-title">All <em>Semi-Expendable Other's Supplies</em></div>
             <div class="page-sub">
-              Annual Procurement Plan — All Departments
+              Annual Procurement Plan — FY <span class="fy-year-span">—</span> — All Departments
               <span class="count-chip" id="semi-ot-count"></span>
             </div>
           </div>
@@ -433,7 +437,7 @@
           <div>
             <div class="page-title">All <em>Semi-Expendable Communication Equipments</em></div>
             <div class="page-sub">
-              Annual Procurement Plan — All Departments
+              Annual Procurement Plan — FY <span class="fy-year-span">—</span> — All Departments
               <span class="count-chip" id="semi-cm-count"></span>
             </div>
           </div>
@@ -478,7 +482,7 @@
           <div>
             <div class="page-title">All <em>Semi-Expendable Machinery Equipments</em></div>
             <div class="page-sub">
-              Annual Procurement Plan — All Departments
+              Annual Procurement Plan — FY <span class="fy-year-span">—</span> — All Departments
               <span class="count-chip" id="semi-me-count"></span>
             </div>
           </div>
@@ -523,7 +527,7 @@
           <div>
             <div class="page-title">All <em>Machinery</em></div>
             <div class="page-sub">
-              Annual Procurement Plan — All Departments
+              Annual Procurement Plan — FY <span class="fy-year-span">—</span> — All Departments
               <span class="count-chip" id="machinery-count"></span>
             </div>
           </div>
@@ -568,7 +572,7 @@
           <div>
             <div class="page-title">All <em>Procurement</em> Items</div>
             <div class="page-sub">
-              Annual Procurement Plan — All Departments
+              Annual Procurement Plan — FY <span class="fy-year-span">—</span> — All Departments
               <span class="count-chip" id="items-count"></span>
             </div>
           </div>
@@ -932,6 +936,31 @@
       </button>
     </div>
     <div class="modal-body" id="ph-detail-body"></div>
+  </div>
+</div>
+
+<!-- ═══ YEAR SETTINGS MODAL ═══ -->
+<div class="modal-overlay" id="modal-year">
+  <div class="modal modal-sm" role="dialog" aria-labelledby="year-modal-title" aria-modal="true">
+    <div class="modal-header">
+      <div class="modal-title" id="year-modal-title">Procurement Year</div>
+      <button type="button" class="modal-close" onclick="closeModal('modal-year')" aria-label="Close">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--ink3);margin-bottom:18px">Set the fiscal year for all procurement records. This label appears on page headers and print forms.</p>
+      <div class="form-group">
+        <label class="form-label">Fiscal Year</label>
+        <input id="year-modal-input" class="form-input" type="number" min="2000" max="2100" placeholder="e.g. 2027"
+          onkeydown="if(event.key==='Enter') saveAppYear()">
+      </div>
+      <div id="year-modal-err" class="login-err" style="display:none;margin-top:8px"></div>
+      <div style="display:flex;gap:10px;margin-top:18px">
+        <button type="button" class="btn btn-primary" onclick="saveAppYear()">Save Year</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-year')">Cancel</button>
+      </div>
+    </div>
   </div>
 </div>
 

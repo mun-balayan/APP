@@ -1,6 +1,6 @@
-// APP-CSE Service Worker — network-first — v32
+// APP-CSE Service Worker — network-first — v33
 // Forces all open tabs to reload when a new SW version activates.
-const CACHE = 'app-cse-v32';
+const CACHE = 'app-cse-v33';
 const ASSETS = ['./', './index.html', './style.css', './app.js', './importer.js'];
 
 self.addEventListener('install', e => {
